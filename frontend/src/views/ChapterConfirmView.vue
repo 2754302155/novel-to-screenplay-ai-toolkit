@@ -59,14 +59,36 @@
 
       <div class="toolbar">
         <RouterLink class="secondary-link" to="/">返回修改</RouterLink>
-        <button type="button" :disabled="!store.canConfirm">确认章节</button>
+        <button type="button" :disabled="!store.canConfirm || taskStore.isCreating" @click="createTask">
+          {{ taskStore.isCreating ? '创建中' : '确认章节' }}
+        </button>
+      </div>
+
+      <div v-if="taskStore.errorMessage" class="alert alert-error">
+        {{ taskStore.errorMessage }}
       </div>
     </template>
   </section>
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+
+import { useConversionTaskStore } from '../stores/conversionTask';
 import { useImportSessionStore } from '../stores/importSession';
 
 const store = useImportSessionStore();
+const taskStore = useConversionTaskStore();
+const router = useRouter();
+
+const createTask = async () => {
+  if (!store.parseResult || !store.canConfirm) {
+    return;
+  }
+
+  const task = await taskStore.create(store.rawText, store.parseResult.chapters);
+  if (task) {
+    void router.push(`/tasks/${task.id}`);
+  }
+};
 </script>

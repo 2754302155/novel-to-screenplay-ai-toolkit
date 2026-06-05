@@ -66,6 +66,37 @@ func TestParseChaptersBlocksInsufficientInput(t *testing.T) {
 	}
 }
 
+func TestCreateConversionTask(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"source_text":"正文","chapters":[{"id":"CH001","title":"第一章","word_count":10},{"id":"CH002","title":"第二章","word_count":10},{"id":"CH003","title":"第三章","word_count":10}]}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/conversion-tasks", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d: %s", response.Code, response.Body.String())
+	}
+	if body := response.Body.String(); !contains(body, `"status":"pending"`) || !contains(body, `"progress":5`) {
+		t.Fatalf("expected pending task, got %s", body)
+	}
+}
+
+func TestCreateConversionTaskBlocksInsufficientChapters(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"source_text":"正文","chapters":[{"id":"CH001","title":"第一章","word_count":10}]}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/conversion-tasks", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected status 422, got %d: %s", response.Code, response.Body.String())
+	}
+}
+
 func contains(value string, needle string) bool {
 	return len(value) >= len(needle) && (value == needle || len(needle) == 0 || index(value, needle) >= 0)
 }

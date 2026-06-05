@@ -19,6 +19,18 @@ export interface ParsedChapter {
   inferred_title: boolean;
 }
 
+export interface ConversionTask {
+  id: string;
+  status: 'pending' | 'processing' | 'validating' | 'completed' | 'failed';
+  progress: number;
+  stage: string;
+  source_text?: string;
+  chapters: ParsedChapter[];
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ParseChaptersResponse {
   chapters: ParsedChapter[];
   cleaned_text: string;
@@ -50,4 +62,17 @@ export async function parseChapters(text: string): Promise<ParseChaptersResponse
 
     throw error;
   }
+}
+
+export async function createConversionTask(sourceText: string, chapters: ParsedChapter[]): Promise<ConversionTask> {
+  const response = await api.post<ConversionTask>('/conversion-tasks', {
+    source_text: sourceText,
+    chapters
+  });
+  return response.data;
+}
+
+export async function getConversionTask(taskId: string): Promise<ConversionTask> {
+  const response = await api.get<ConversionTask>(`/conversion-tasks/${taskId}`);
+  return response.data;
 }
