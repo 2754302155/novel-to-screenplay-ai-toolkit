@@ -38,6 +38,10 @@
         </div>
       </div>
 
+      <div v-if="task.status === 'failed' && task.error_message" class="alert alert-error">
+        {{ task.error_message }}
+      </div>
+
       <div v-if="task.status === 'completed' && task.yaml" class="yaml-preview">
         <div class="yaml-preview-header">
           <div>
