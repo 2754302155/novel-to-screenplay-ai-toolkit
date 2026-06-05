@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/ai"
 	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/config"
 	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/repository"
 	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/service"
@@ -27,7 +28,7 @@ func NewRouter(cfg config.Config) *gin.Engine {
 		})
 	})
 	registerChapterRoutes(api)
-	registerTaskRoutes(api, service.NewTaskService(repository.NewTaskRepository()))
+	registerTaskRoutes(api, service.NewTaskService(repository.NewTaskRepository(), ai.NewLocalClient()))
 
 	return router
 }

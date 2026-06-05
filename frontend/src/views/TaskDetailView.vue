@@ -37,6 +37,16 @@
           <strong>{{ task.stage }}</strong>
         </div>
       </div>
+
+      <div v-if="task.status === 'completed' && task.yaml" class="yaml-preview">
+        <div class="yaml-preview-header">
+          <div>
+            <span class="label">生成结果</span>
+            <strong>YAML 剧本初稿</strong>
+          </div>
+        </div>
+        <pre><code>{{ task.yaml }}</code></pre>
+      </div>
     </div>
 
     <div v-else class="empty-state">
@@ -76,7 +86,12 @@ const statusLabel = computed(() => {
 
 const fetchTask = () => {
   if (taskId.value) {
-    void taskStore.fetch(taskId.value);
+    void taskStore.fetch(taskId.value).then((task) => {
+      if ((task?.status === 'completed' || task?.status === 'failed') && timer) {
+        window.clearInterval(timer);
+        timer = undefined;
+      }
+    });
   }
 };
 

@@ -366,6 +366,31 @@ input {
   line-height: 1.45;
 }
 
+.yaml-preview {
+  margin-top: 24px;
+}
+
+.yaml-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.yaml-preview pre {
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  margin: 0;
+  padding: 14px;
+  background: #f8fafc;
+  color: #253241;
+  line-height: 1.55;
+  white-space: pre;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;

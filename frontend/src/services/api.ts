@@ -26,6 +26,8 @@ export interface ConversionTask {
   stage: string;
   source_text?: string;
   chapters: ParsedChapter[];
+  draft?: unknown;
+  yaml?: string;
   error_message?: string;
   created_at: string;
   updated_at: string;
