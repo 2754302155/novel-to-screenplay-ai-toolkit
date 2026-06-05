@@ -32,6 +32,52 @@
       </aside>
     </div>
 
+    <div class="ai-settings-panel">
+      <div class="section-heading compact">
+        <p class="eyebrow">AI</p>
+        <h3>模型设置</h3>
+      </div>
+      <div class="settings-grid">
+        <label>
+          <span class="field-label">Base URL</span>
+          <input
+            :value="aiSettings.settings.base_url"
+            class="text-field"
+            placeholder="https://api.openai.com/v1"
+            @input="updateAISetting('base_url', $event)"
+          />
+        </label>
+        <label>
+          <span class="field-label">模型</span>
+          <input
+            :value="aiSettings.settings.model"
+            class="text-field"
+            placeholder="gpt-4.1-mini"
+            @input="updateAISetting('model', $event)"
+          />
+        </label>
+        <label class="settings-wide">
+          <span class="field-label">API Key</span>
+          <input
+            :value="aiSettings.settings.api_key"
+            class="text-field"
+            type="password"
+            placeholder="sk-..."
+            autocomplete="off"
+            @input="updateAISetting('api_key', $event)"
+          />
+        </label>
+      </div>
+      <div class="toolbar">
+        <button type="button" :disabled="aiSettings.isTesting" @click="aiSettings.test()">
+          {{ aiSettings.isTesting ? '测试中' : '测试联通' }}
+        </button>
+        <span v-if="aiSettings.testMessage" :class="aiSettings.testOK ? 'inline-success' : 'inline-error'">
+          {{ aiSettings.testMessage }}
+        </span>
+      </div>
+    </div>
+
     <div v-if="store.errorMessage" class="alert alert-error">
       {{ store.errorMessage }}
     </div>
@@ -62,9 +108,11 @@
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { useAISettingsStore } from '../stores/aiSettings';
 import { useImportSessionStore } from '../stores/importSession';
 
 const store = useImportSessionStore();
+const aiSettings = useAISettingsStore();
 const router = useRouter();
 const fileError = ref('');
 
@@ -107,5 +155,9 @@ const readFile = async (event: Event) => {
 
   store.setText(await file.text());
   input.value = '';
+};
+
+const updateAISetting = (key: 'base_url' | 'model' | 'api_key', event: Event) => {
+  aiSettings.update({ [key]: (event.target as HTMLInputElement).value });
 };
 </script>

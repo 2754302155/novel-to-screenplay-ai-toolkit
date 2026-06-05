@@ -74,11 +74,13 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 
+import { useAISettingsStore } from '../stores/aiSettings';
 import { useConversionTaskStore } from '../stores/conversionTask';
 import { useImportSessionStore } from '../stores/importSession';
 
 const store = useImportSessionStore();
 const taskStore = useConversionTaskStore();
+const aiSettings = useAISettingsStore();
 const router = useRouter();
 
 const createTask = async () => {
@@ -86,7 +88,11 @@ const createTask = async () => {
     return;
   }
 
-  const task = await taskStore.create(store.rawText, store.parseResult.chapters);
+  const task = await taskStore.create(
+    store.rawText,
+    store.parseResult.chapters,
+    aiSettings.hasConfig ? aiSettings.sanitizedConfig : undefined
+  );
   if (task) {
     void router.push(`/tasks/${task.id}`);
   }

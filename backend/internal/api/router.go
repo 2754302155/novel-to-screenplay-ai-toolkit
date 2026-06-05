@@ -27,6 +27,7 @@ func NewRouter(cfg config.Config) *gin.Engine {
 			"version": cfg.Version,
 		})
 	})
+	registerAIRoutes(api)
 	registerChapterRoutes(api)
 	registerTaskRoutes(api, service.NewTaskService(repository.NewTaskRepository(), ai.NewLocalClient()))
 

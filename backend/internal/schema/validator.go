@@ -2,10 +2,13 @@ package schema
 
 import (
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/domain"
 )
+
+var allowedBeatTypes = []string{"action", "dialogue", "voice_over", "transition", "note"}
 
 type ValidationIssue struct {
 	Path    string `json:"path"`
@@ -78,12 +81,14 @@ func RepairDraft(draft domain.ScreenplayDraft, chapters []domain.Chapter, now ti
 	if draft.Project.GeneratedAt.IsZero() {
 		draft.Project.GeneratedAt = now.UTC()
 	}
-	if draft.Source.ChapterCount == 0 {
+	if draft.Source.ChapterCount < len(chapters) {
 		draft.Source.ChapterCount = len(chapters)
 	}
-	if len(draft.Source.Chapters) == 0 {
+	if len(draft.Source.Chapters) < len(chapters) {
 		draft.Source.Chapters = chapters
 	}
+	draft.Characters = repairCharacters(draft.Characters)
+	draft.Scenes = repairScenes(draft.Scenes, draft.Characters, chapters)
 	if len(draft.QualityReport.Warnings) == 0 {
 		draft.QualityReport.Warnings = []string{"系统已对 AI 输出执行基础结构修复。"}
 	}
@@ -92,4 +97,127 @@ func RepairDraft(draft domain.ScreenplayDraft, chapters []domain.Chapter, now ti
 	}
 
 	return draft
+}
+
+func repairCharacters(characters []domain.Character) []domain.Character {
+	if len(characters) == 0 {
+		return []domain.Character{
+			{
+				ID:              "CHAR001",
+				Name:            "待确认人物",
+				Aliases:         []string{},
+				RoleType:        "unknown",
+				Description:     "AI 输出未提供人物表，系统已创建占位人物用于保持剧本结构完整。",
+				FirstAppearance: "",
+			},
+		}
+	}
+
+	used := map[string]bool{}
+	for index := range characters {
+		if characters[index].ID == "" || used[characters[index].ID] {
+			characters[index].ID = fmt.Sprintf("CHAR%03d", index+1)
+		}
+		used[characters[index].ID] = true
+		if characters[index].Name == "" {
+			characters[index].Name = fmt.Sprintf("待确认人物%d", index+1)
+		}
+		if characters[index].Aliases == nil {
+			characters[index].Aliases = []string{}
+		}
+		if characters[index].RoleType == "" {
+			characters[index].RoleType = "unknown"
+		}
+	}
+
+	return characters
+}
+
+func repairScenes(scenes []domain.Scene, characters []domain.Character, chapters []domain.Chapter) []domain.Scene {
+	if len(scenes) == 0 {
+		scenes = make([]domain.Scene, 0, len(chapters))
+		for index, chapter := range chapters {
+			scenes = append(scenes, domain.Scene{
+				ID:              fmt.Sprintf("SCENE%03d", index+1),
+				SourceRefs:      []string{chapter.ID},
+				Heading:         chapter.Title,
+				Location:        "待确认地点",
+				TimeOfDay:       "待确认时间",
+				Characters:      []string{characters[0].ID},
+				DramaticPurpose: "根据章节内容生成可编辑剧本初稿。",
+				Beats: []domain.Beat{
+					fallbackBeat("AI 输出未提供有效场景，系统已创建占位节拍，需人工补充。"),
+				},
+				Notes: []string{"系统根据章节自动补齐场景结构。"},
+			})
+		}
+		return scenes
+	}
+
+	characterIDs := map[string]bool{}
+	for _, character := range characters {
+		characterIDs[character.ID] = true
+	}
+	fallbackCharacterID := characters[0].ID
+
+	for index := range scenes {
+		if scenes[index].ID == "" {
+			scenes[index].ID = fmt.Sprintf("SCENE%03d", index+1)
+		}
+		if len(scenes[index].SourceRefs) == 0 {
+			scenes[index].SourceRefs = []string{chapterIDAt(chapters, index)}
+		}
+		scenes[index].Characters = filterKnownCharacterIDs(scenes[index].Characters, characterIDs)
+		if len(scenes[index].Characters) == 0 {
+			scenes[index].Characters = []string{fallbackCharacterID}
+		}
+		if len(scenes[index].Beats) == 0 {
+			scenes[index].Beats = []domain.Beat{fallbackBeat("AI 输出未提供该场景节拍，系统已创建占位节拍，需人工补充。")}
+		}
+		for beatIndex := range scenes[index].Beats {
+			if scenes[index].Beats[beatIndex].Type == "" || !slices.Contains(allowedBeatTypes, scenes[index].Beats[beatIndex].Type) {
+				scenes[index].Beats[beatIndex].Type = "note"
+			}
+			if scenes[index].Beats[beatIndex].Text == "" {
+				scenes[index].Beats[beatIndex].Text = "待人工补充。"
+			}
+			if scenes[index].Beats[beatIndex].Confidence < 0 || scenes[index].Beats[beatIndex].Confidence > 1 {
+				scenes[index].Beats[beatIndex].Confidence = 0.3
+			}
+		}
+		if scenes[index].Notes == nil {
+			scenes[index].Notes = []string{}
+		}
+	}
+
+	return scenes
+}
+
+func fallbackBeat(text string) domain.Beat {
+	return domain.Beat{
+		Type:       "note",
+		Speaker:    "",
+		Text:       text,
+		Confidence: 0.3,
+	}
+}
+
+func chapterIDAt(chapters []domain.Chapter, index int) string {
+	if len(chapters) == 0 {
+		return "CH001"
+	}
+	if index >= len(chapters) {
+		return chapters[len(chapters)-1].ID
+	}
+	return chapters[index].ID
+}
+
+func filterKnownCharacterIDs(ids []string, known map[string]bool) []string {
+	filtered := []string{}
+	for _, id := range ids {
+		if known[id] {
+			filtered = append(filtered, id)
+		}
+	}
+	return filtered
 }

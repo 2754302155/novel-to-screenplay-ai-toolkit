@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"slices"
 	"sync"
 
 	"github.com/2754302155/novel-to-screenplay-ai-toolkit/backend/internal/domain"
@@ -36,4 +37,19 @@ func (repository *TaskRepository) FindByID(id string) (domain.ConversionTask, er
 	}
 
 	return task, nil
+}
+
+func (repository *TaskRepository) FindAll() []domain.ConversionTask {
+	repository.mu.RLock()
+	defer repository.mu.RUnlock()
+
+	tasks := make([]domain.ConversionTask, 0, len(repository.tasks))
+	for _, task := range repository.tasks {
+		tasks = append(tasks, task)
+	}
+	slices.SortFunc(tasks, func(left domain.ConversionTask, right domain.ConversionTask) int {
+		return right.CreatedAt.Compare(left.CreatedAt)
+	})
+
+	return tasks
 }

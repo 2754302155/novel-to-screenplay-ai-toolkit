@@ -29,8 +29,41 @@ export interface ConversionTask {
   draft?: unknown;
   yaml?: string;
   error_message?: string;
+  total_chunks?: number;
+  completed_chunks?: number;
+  current_chunk?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ConversionTaskSummary {
+  id: string;
+  status: ConversionTask['status'];
+  progress: number;
+  stage: string;
+  chapter_count: number;
+  total_chunks?: number;
+  completed_chunks?: number;
+  current_chunk?: string;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversionTaskListResponse {
+  tasks: ConversionTaskSummary[];
+}
+
+export interface AIProviderConfig {
+  provider: string;
+  base_url: string;
+  model: string;
+  api_key: string;
+}
+
+export interface TestAIResponse {
+  ok: boolean;
+  message: string;
 }
 
 export interface ParseChaptersResponse {
@@ -66,10 +99,15 @@ export async function parseChapters(text: string): Promise<ParseChaptersResponse
   }
 }
 
-export async function createConversionTask(sourceText: string, chapters: ParsedChapter[]): Promise<ConversionTask> {
+export async function createConversionTask(
+  sourceText: string,
+  chapters: ParsedChapter[],
+  aiConfig?: AIProviderConfig
+): Promise<ConversionTask> {
   const response = await api.post<ConversionTask>('/conversion-tasks', {
     source_text: sourceText,
-    chapters
+    chapters,
+    ai_config: aiConfig
   });
   return response.data;
 }
@@ -77,4 +115,24 @@ export async function createConversionTask(sourceText: string, chapters: ParsedC
 export async function getConversionTask(taskId: string): Promise<ConversionTask> {
   const response = await api.get<ConversionTask>(`/conversion-tasks/${taskId}`);
   return response.data;
+}
+
+export async function listConversionTasks(): Promise<ConversionTaskSummary[]> {
+  const response = await api.get<ConversionTaskListResponse>('/conversion-tasks');
+  return response.data.tasks;
+}
+
+export async function testAIConnection(aiConfig: AIProviderConfig): Promise<TestAIResponse> {
+  try {
+    const response = await api.post<TestAIResponse>('/ai/test', aiConfig, {
+      timeout: 35000
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError<TestAIResponse>(error) && error.response?.data) {
+      return error.response.data;
+    }
+
+    throw error;
+  }
 }

@@ -30,6 +30,7 @@ type Chapter struct {
 	ID        string `json:"id" yaml:"id"`
 	Title     string `json:"title" yaml:"title"`
 	WordCount int    `json:"word_count" yaml:"word_count"`
+	Body      string `json:"-" yaml:"-"`
 }
 
 type Adaptation struct {
