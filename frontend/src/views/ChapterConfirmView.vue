@@ -36,10 +36,54 @@
         </div>
       </div>
 
+      <div class="chapter-selection-panel">
+        <div>
+          <span class="label">生成范围</span>
+          <strong>{{ selectedRangeLabel }}</strong>
+        </div>
+        <div>
+          <span class="label">所选章节</span>
+          <strong>{{ selectedChapterCount }}</strong>
+        </div>
+        <div>
+          <span class="label">所选字数</span>
+          <strong>{{ selectedWordCount }}</strong>
+        </div>
+        <div class="selection-controls">
+          <label>
+            <span class="field-label">起始章节</span>
+            <select v-model.number="startIndexModel" class="select-field">
+              <option
+                v-for="(chapter, index) in store.parseResult.chapters"
+                :key="`start-${chapter.id}`"
+                :value="index"
+                :disabled="index > maxStartIndex"
+              >
+                {{ chapter.id }} {{ chapter.title }}
+              </option>
+            </select>
+          </label>
+          <label>
+            <span class="field-label">结束章节</span>
+            <select v-model.number="endIndexModel" class="select-field">
+              <option
+                v-for="(chapter, index) in store.parseResult.chapters"
+                :key="`end-${chapter.id}`"
+                :value="index"
+                :disabled="index < minEndIndex"
+              >
+                {{ chapter.id }} {{ chapter.title }}
+              </option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
+              <th>选择</th>
               <th>编号</th>
               <th>标题</th>
               <th>字数</th>
@@ -47,7 +91,16 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="chapter in store.parseResult.chapters" :key="chapter.id">
+            <tr
+              v-for="(chapter, index) in store.parseResult.chapters"
+              :key="chapter.id"
+              :class="{ 'selected-row': isSelectedChapter(index) }"
+            >
+              <td>
+                <span class="selection-mark" :class="{ active: isSelectedChapter(index) }">
+                  {{ isSelectedChapter(index) ? '生成' : '-' }}
+                </span>
+              </td>
               <td>{{ chapter.id }}</td>
               <td>{{ chapter.title }}</td>
               <td>{{ chapter.word_count }}</td>
@@ -59,9 +112,13 @@
 
       <div class="toolbar">
         <RouterLink class="secondary-link" to="/">返回修改</RouterLink>
-        <button type="button" :disabled="!store.canConfirm || taskStore.isCreating" @click="createTask">
-          {{ taskStore.isCreating ? '创建中' : '确认章节' }}
+        <button type="button" :disabled="!canCreateSelectedTask" @click="createTask">
+          {{ taskStore.isCreating ? '创建中' : '生成所选章节' }}
         </button>
+      </div>
+
+      <div v-if="selectionMessage" class="alert alert-warning">
+        {{ selectionMessage }}
       </div>
 
       <div v-if="taskStore.errorMessage" class="alert alert-error">
@@ -72,25 +129,100 @@
 </template>
 
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 
 import { useAISettingsStore } from '../stores/aiSettings';
 import { useConversionTaskStore } from '../stores/conversionTask';
 import { useImportSessionStore } from '../stores/importSession';
+import {
+  buildSelectedChapterSourceText,
+  isChapterInRange,
+  MIN_SELECTED_CHAPTERS,
+  normalizeChapterRange
+} from '../utils/chapterSelection';
 
 const store = useImportSessionStore();
 const taskStore = useConversionTaskStore();
 const aiSettings = useAISettingsStore();
 const router = useRouter();
+const selectedStartIndex = ref(0);
+const selectedEndIndex = ref(0);
+
+const chapters = computed(() => store.parseResult?.chapters ?? []);
+const chapterCount = computed(() => chapters.value.length);
+const maxStartIndex = computed(() => Math.max(0, chapterCount.value - MIN_SELECTED_CHAPTERS));
+const minEndIndex = computed(() => Math.min(chapterCount.value - 1, selectedStartIndex.value + MIN_SELECTED_CHAPTERS - 1));
+const selectedRange = computed(() =>
+  normalizeChapterRange(chapterCount.value, selectedStartIndex.value, selectedEndIndex.value)
+);
+const selectedChapters = computed(() =>
+  chapters.value.slice(selectedRange.value.start, selectedRange.value.end + 1)
+);
+const selectedChapterCount = computed(() => selectedChapters.value.length);
+const selectedWordCount = computed(() =>
+  selectedChapters.value.reduce((total, chapter) => total + chapter.word_count, 0)
+);
+const selectedRangeLabel = computed(() => {
+  if (!selectedRange.value.isValid || selectedChapters.value.length === 0) {
+    return '-';
+  }
+
+  const first = selectedChapters.value[0];
+  const last = selectedChapters.value[selectedChapters.value.length - 1];
+  return `${first.id} - ${last.id}`;
+});
+const selectionMessage = computed(() => {
+  if (!store.canConfirm) {
+    return '';
+  }
+  if (!selectedRange.value.isValid) {
+    return `至少选择 ${MIN_SELECTED_CHAPTERS} 个连续章节后才能生成剧本。`;
+  }
+  return '';
+});
+const canCreateSelectedTask = computed(
+  () => store.canConfirm && selectedRange.value.isValid && !taskStore.isCreating
+);
+const startIndexModel = computed({
+  get: () => selectedRange.value.start,
+  set: (value: number) => {
+    selectedStartIndex.value = value;
+    if (selectedEndIndex.value < value + MIN_SELECTED_CHAPTERS - 1) {
+      selectedEndIndex.value = Math.min(chapterCount.value - 1, value + MIN_SELECTED_CHAPTERS - 1);
+    }
+  }
+});
+const endIndexModel = computed({
+  get: () => selectedRange.value.end,
+  set: (value: number) => {
+    selectedEndIndex.value = value;
+    if (selectedStartIndex.value > value - MIN_SELECTED_CHAPTERS + 1) {
+      selectedStartIndex.value = Math.max(0, value - MIN_SELECTED_CHAPTERS + 1);
+    }
+  }
+});
+
+watch(
+  chapterCount,
+  (count) => {
+    selectedStartIndex.value = 0;
+    selectedEndIndex.value = Math.max(0, count - 1);
+  },
+  { immediate: true }
+);
+
+const isSelectedChapter = (index: number) => isChapterInRange(index, selectedRange.value);
 
 const createTask = async () => {
-  if (!store.parseResult || !store.canConfirm) {
+  if (!store.parseResult || !canCreateSelectedTask.value) {
     return;
   }
 
+  const sourceText = buildSelectedChapterSourceText(selectedChapters.value) || store.rawText;
   const task = await taskStore.create(
-    store.rawText,
-    store.parseResult.chapters,
+    sourceText,
+    selectedChapters.value,
     aiSettings.hasConfig ? aiSettings.sanitizedConfig : undefined
   );
   if (task) {
