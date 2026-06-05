@@ -43,13 +43,10 @@ type chatCompletionResponse struct {
 }
 
 func NewOpenAICompatibleClient(config ProviderConfig) (*OpenAICompatibleClient, error) {
-	config.BaseURL = strings.TrimRight(strings.TrimSpace(config.BaseURL), "/")
+	config.BaseURL = normalizeOpenAICompatibleBaseURL(config.BaseURL)
 	config.Model = strings.TrimSpace(config.Model)
 	config.APIKey = strings.TrimSpace(config.APIKey)
 
-	if config.BaseURL == "" {
-		config.BaseURL = defaultOpenAICompatibleBaseURL
-	}
 	if config.Model == "" {
 		return nil, errors.New("model is required")
 	}
@@ -63,6 +60,17 @@ func NewOpenAICompatibleClient(config ProviderConfig) (*OpenAICompatibleClient, 
 			Timeout: 90 * time.Second,
 		},
 	}, nil
+}
+
+func normalizeOpenAICompatibleBaseURL(baseURL string) string {
+	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	if trimmed == "" {
+		return defaultOpenAICompatibleBaseURL
+	}
+	if strings.HasSuffix(trimmed, "/v1") {
+		return trimmed
+	}
+	return trimmed + "/v1"
 }
 
 func (client *OpenAICompatibleClient) GenerateDraft(ctx context.Context, input DraftInput) (domain.ScreenplayDraft, error) {

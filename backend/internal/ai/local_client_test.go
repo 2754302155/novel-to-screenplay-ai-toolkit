@@ -35,3 +35,48 @@ func TestOpenAICompatibleClientRequiresConfig(t *testing.T) {
 		t.Fatal("expected missing api key error")
 	}
 }
+
+func TestOpenAICompatibleClientNormalizesBaseURL(t *testing.T) {
+	tests := []struct {
+		name     string
+		baseURL  string
+		expected string
+	}{
+		{
+			name:     "uses default",
+			baseURL:  "",
+			expected: defaultOpenAICompatibleBaseURL,
+		},
+		{
+			name:     "adds v1",
+			baseURL:  "https://api.openai.com",
+			expected: "https://api.openai.com/v1",
+		},
+		{
+			name:     "keeps existing v1",
+			baseURL:  "https://api.openai.com/v1",
+			expected: "https://api.openai.com/v1",
+		},
+		{
+			name:     "trims trailing slash",
+			baseURL:  "https://api.openai.com/v1/",
+			expected: "https://api.openai.com/v1",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			client, err := NewOpenAICompatibleClient(ProviderConfig{
+				BaseURL: test.baseURL,
+				Model:   "gpt-4.1",
+				APIKey:  "test-key",
+			})
+			if err != nil {
+				t.Fatalf("create client: %v", err)
+			}
+			if client.config.BaseURL != test.expected {
+				t.Fatalf("expected %s, got %s", test.expected, client.config.BaseURL)
+			}
+		})
+	}
+}
