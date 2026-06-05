@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +27,42 @@ func TestHealthz(t *testing.T) {
 
 	if body := response.Body.String(); body == "" || !contains(body, "novel-to-screenplay-api") {
 		t.Fatalf("unexpected response body: %s", body)
+	}
+}
+
+func TestParseChapters(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"text":"第一章\n正文。\n\n第二章\n正文。\n\n第三章\n正文。"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/chapters/parse", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", response.Code, response.Body.String())
+	}
+
+	if body := response.Body.String(); !contains(body, `"id":"CH001"`) {
+		t.Fatalf("expected parsed chapter in response, got %s", body)
+	}
+}
+
+func TestParseChaptersBlocksInsufficientInput(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"text":"第一章\n正文。"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/chapters/parse", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusUnprocessableEntity {
+		t.Fatalf("expected status 422, got %d: %s", response.Code, response.Body.String())
+	}
+
+	if body := response.Body.String(); !contains(body, "CHAPTER_COUNT_TOO_LOW") {
+		t.Fatalf("expected chapter count error, got %s", body)
 	}
 }
 
