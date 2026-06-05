@@ -19,6 +19,19 @@ export interface ParsedChapter {
   inferred_title: boolean;
 }
 
+export interface QualityReport {
+  coverage: {
+    converted_chapters: number;
+    estimated_unconverted_ratio: number;
+  };
+  warnings: string[];
+  human_review_required: string[];
+}
+
+export interface ScreenplayDraft {
+  quality_report?: QualityReport;
+}
+
 export interface ConversionTask {
   id: string;
   status: 'pending' | 'processing' | 'validating' | 'completed' | 'failed';
@@ -26,7 +39,7 @@ export interface ConversionTask {
   stage: string;
   source_text?: string;
   chapters: ParsedChapter[];
-  draft?: unknown;
+  draft?: ScreenplayDraft;
   yaml?: string;
   error_message?: string;
   total_chunks?: number;

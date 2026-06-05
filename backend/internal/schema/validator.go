@@ -34,6 +34,9 @@ func ValidateDraft(draft domain.ScreenplayDraft) ValidationResult {
 	if draft.Source.ChapterCount < 3 {
 		addIssue("source.chapter_count", "输入章节数量必须大于等于 3。")
 	}
+	if len(draft.Source.Chapters) == 0 {
+		addIssue("source.chapters", "来源章节列表不能为空。")
+	}
 	if len(draft.Characters) == 0 {
 		addIssue("characters", "人物表不能为空。")
 	}
@@ -42,6 +45,15 @@ func ValidateDraft(draft domain.ScreenplayDraft) ValidationResult {
 	}
 
 	characters := map[string]bool{}
+	chapterIDs := map[string]bool{}
+	for _, chapter := range draft.Source.Chapters {
+		if chapter.ID == "" {
+			addIssue("source.chapters[].id", "来源章节 ID 不能为空。")
+			continue
+		}
+		chapterIDs[chapter.ID] = true
+	}
+
 	for _, character := range draft.Characters {
 		if character.ID == "" {
 			addIssue("characters[].id", "人物 ID 不能为空。")
@@ -58,12 +70,29 @@ func ValidateDraft(draft domain.ScreenplayDraft) ValidationResult {
 		if len(scene.SourceRefs) == 0 {
 			addIssue(path+".source_refs", "每个场景至少需要一个来源章节引用。")
 		}
+		for _, sourceRef := range scene.SourceRefs {
+			if len(chapterIDs) > 0 && !chapterIDs[sourceRef] {
+				addIssue(path+".source_refs", "场景引用了不存在的来源章节 ID。")
+			}
+		}
 		if len(scene.Beats) == 0 {
 			addIssue(path+".beats", "每个场景至少需要一个节拍。")
 		}
 		for _, characterID := range scene.Characters {
 			if !characters[characterID] {
 				addIssue(path+".characters", "场景引用了不存在的人物 ID。")
+			}
+		}
+		for beatIndex, beat := range scene.Beats {
+			beatPath := fmt.Sprintf("%s.beats[%d]", path, beatIndex)
+			if !slices.Contains(allowedBeatTypes, beat.Type) {
+				addIssue(beatPath+".type", "节拍类型必须是 action、dialogue、voice_over、transition 或 note。")
+			}
+			if beat.Text == "" {
+				addIssue(beatPath+".text", "节拍文本不能为空。")
+			}
+			if beat.Confidence < 0 || beat.Confidence > 1 {
+				addIssue(beatPath+".confidence", "置信度必须在 0 到 1 之间。")
 			}
 		}
 	}

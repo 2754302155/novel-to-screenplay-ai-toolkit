@@ -29,6 +29,7 @@ func NewRouter(cfg config.Config) *gin.Engine {
 	})
 	registerAIRoutes(api)
 	registerChapterRoutes(api)
+	registerYAMLRoutes(api)
 	registerTaskRoutes(api, service.NewTaskService(repository.NewTaskRepository(), ai.NewLocalClient()))
 
 	return router
