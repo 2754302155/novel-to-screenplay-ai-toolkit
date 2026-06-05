@@ -24,6 +24,7 @@ func NewRouter(cfg config.Config) *gin.Engine {
 			"version": cfg.Version,
 		})
 	})
+	registerChapterRoutes(api)
 
 	return router
 }

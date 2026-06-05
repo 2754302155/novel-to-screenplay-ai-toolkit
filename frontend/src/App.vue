@@ -6,7 +6,8 @@
         <h1>AI 小说转剧本工具</h1>
       </div>
       <nav aria-label="主导航">
-        <RouterLink to="/">工作台</RouterLink>
+        <RouterLink to="/">导入小说</RouterLink>
+        <RouterLink to="/chapters/confirm">章节确认</RouterLink>
         <RouterLink to="/tasks">转换任务</RouterLink>
       </nav>
     </aside>
