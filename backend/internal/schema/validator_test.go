@@ -19,6 +19,67 @@ func TestValidateDraftRejectsMissingScenes(t *testing.T) {
 	}
 }
 
+func TestValidateDraftRejectsInvalidRefsAndBeats(t *testing.T) {
+	result := ValidateDraft(domain.ScreenplayDraft{
+		SchemaVersion: domain.CurrentSchemaVersion,
+		Source: domain.Source{
+			ChapterCount: 3,
+			Chapters:     sampleChapters(),
+		},
+		Characters: []domain.Character{{ID: "CHAR001"}},
+		Scenes: []domain.Scene{
+			{
+				ID:         "SCENE001",
+				SourceRefs: []string{"CH999"},
+				Characters: []string{"MISSING"},
+				Beats: []domain.Beat{
+					{Type: "bad", Text: "", Confidence: 2},
+				},
+			},
+		},
+	})
+
+	if result.Valid {
+		t.Fatal("expected invalid draft")
+	}
+	if len(result.Issues) < 4 {
+		t.Fatalf("expected multiple validation issues, got %#v", result.Issues)
+	}
+}
+
+func TestGenerateQualityReportFlagsCoverageAndLowConfidence(t *testing.T) {
+	draft := domain.ScreenplayDraft{
+		SchemaVersion: domain.CurrentSchemaVersion,
+		Source: domain.Source{
+			ChapterCount: 3,
+			Chapters:     sampleChapters(),
+		},
+		Characters: []domain.Character{{ID: "CHAR001"}},
+		Scenes: []domain.Scene{
+			{
+				ID:         "SCENE001",
+				SourceRefs: []string{"CH001"},
+				Characters: []string{"CHAR001"},
+				Beats: []domain.Beat{
+					{Type: "note", Text: "待人工补充。", Confidence: 0.3},
+				},
+			},
+		},
+	}
+
+	report := GenerateQualityReport(draft, sampleChapters(), ValidateDraft(draft))
+
+	if report.Coverage.ConvertedChapters != 1 {
+		t.Fatalf("expected 1 converted chapter, got %d", report.Coverage.ConvertedChapters)
+	}
+	if report.Coverage.EstimatedUnconvertedRate <= 0 {
+		t.Fatalf("expected unconverted rate, got %f", report.Coverage.EstimatedUnconvertedRate)
+	}
+	if len(report.Warnings) == 0 || len(report.HumanReviewRequired) == 0 {
+		t.Fatalf("expected warnings and human review items, got %#v", report)
+	}
+}
+
 func TestRepairDraftFillsBasicFields(t *testing.T) {
 	repaired := RepairDraft(domain.ScreenplayDraft{}, sampleChapters(), time.Date(2026, 6, 5, 10, 0, 0, 0, time.UTC))
 

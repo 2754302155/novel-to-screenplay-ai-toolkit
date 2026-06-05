@@ -162,6 +162,8 @@ func (service *TaskService) complete(task domain.ConversionTask, now time.Time) 
 		return service.fail(task, service.now().UTC(), "YAML Schema 校验失败。", "AI 输出缺少必要结构，请稍后重试。")
 	}
 
+	draft.QualityReport = schema.GenerateQualityReport(draft, task.Chapters, validation)
+
 	yamlText, err := yaml.Marshal(draft)
 	if err != nil {
 		return service.fail(task, service.now().UTC(), "YAML 序列化失败。", "剧本初稿导出失败，请稍后重试。")

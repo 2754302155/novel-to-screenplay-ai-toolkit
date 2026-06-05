@@ -140,6 +140,40 @@ func TestAITestRejectsIncompleteConfig(t *testing.T) {
 	}
 }
 
+func TestValidateYAML(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"yaml":"schema_version: \"1.0\"\nproject:\n  title: 测试\n  author: 未知\n  generated_at: \"2026-06-05T10:00:00Z\"\nsource:\n  chapter_count: 3\n  chapters:\n    - id: CH001\n      title: 第一章\n      word_count: 10\n    - id: CH002\n      title: 第二章\n      word_count: 10\n    - id: CH003\n      title: 第三章\n      word_count: 10\nadaptation:\n  format: 短剧\n  logline: 测试\n  synopsis: 测试\n  themes: []\ncharacters:\n  - id: CHAR001\n    name: 林夏\n    aliases: []\n    role_type: protagonist\n    description: 主角\n    first_appearance: CH001\nscenes:\n  - id: SCENE001\n    source_refs: [CH001]\n    heading: 内景\n    location: 书店\n    time_of_day: 夜\n    characters: [CHAR001]\n    dramatic_purpose: 测试\n    beats:\n      - type: action\n        speaker: \"\"\n        text: 林夏进入书店。\n        confidence: 0.8\n    notes: []\nquality_report:\n  coverage:\n    converted_chapters: 1\n    estimated_unconverted_ratio: 0\n  warnings: []\n  human_review_required: []\n"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/yaml/validate", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", response.Code, response.Body.String())
+	}
+	if body := response.Body.String(); !contains(body, `"valid":true`) || !contains(body, `"quality_report"`) {
+		t.Fatalf("expected valid yaml response, got %s", body)
+	}
+}
+
+func TestValidateYAMLReturnsParseIssue(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"yaml":"schema_version: [broken"}`)
+	request := httptest.NewRequest(http.MethodPost, "/api/yaml/validate", bytes.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	response := httptest.NewRecorder()
+
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d: %s", response.Code, response.Body.String())
+	}
+	if body := response.Body.String(); !contains(body, `"valid":false`) || !contains(body, "YAML 解析失败") {
+		t.Fatalf("expected parse issue, got %s", body)
+	}
+}
+
 func contains(value string, needle string) bool {
 	return len(value) >= len(needle) && (value == needle || len(needle) == 0 || index(value, needle) >= 0)
 }

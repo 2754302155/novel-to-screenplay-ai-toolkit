@@ -50,6 +50,51 @@
         {{ task.error_message }}
       </div>
 
+      <div v-if="qualityReport" class="quality-report">
+        <div class="quality-report-header">
+          <div>
+            <span class="label">质量报告</span>
+            <strong>覆盖率与人工确认项</strong>
+          </div>
+        </div>
+
+        <div class="quality-grid">
+          <div>
+            <span class="label">已覆盖章节</span>
+            <strong>{{ qualityReport.coverage.converted_chapters }}</strong>
+          </div>
+          <div>
+            <span class="label">未处理比例</span>
+            <strong>{{ unconvertedRate }}</strong>
+          </div>
+          <div>
+            <span class="label">警告数量</span>
+            <strong>{{ qualityReport.warnings.length }}</strong>
+          </div>
+          <div>
+            <span class="label">人工确认项</span>
+            <strong>{{ qualityReport.human_review_required.length }}</strong>
+          </div>
+        </div>
+
+        <div class="quality-columns">
+          <div>
+            <span class="field-label">警告</span>
+            <ul v-if="qualityReport.warnings.length > 0">
+              <li v-for="warning in qualityReport.warnings" :key="warning">{{ warning }}</li>
+            </ul>
+            <p v-else>暂无警告。</p>
+          </div>
+          <div>
+            <span class="field-label">人工确认项</span>
+            <ul v-if="qualityReport.human_review_required.length > 0">
+              <li v-for="item in qualityReport.human_review_required" :key="item">{{ item }}</li>
+            </ul>
+            <p v-else>暂无人工确认项。</p>
+          </div>
+        </div>
+      </div>
+
       <div v-if="task.status === 'completed' && task.yaml" class="yaml-preview">
         <div class="yaml-preview-header">
           <div>
@@ -100,6 +145,11 @@ const chunkProgress = computed(() => {
     return '-';
   }
   return `${task.value.completed_chunks ?? 0}/${task.value.total_chunks}`;
+});
+const qualityReport = computed(() => task.value?.draft?.quality_report);
+const unconvertedRate = computed(() => {
+  const rate = qualityReport.value?.coverage.estimated_unconverted_ratio ?? 0;
+  return `${Math.round(rate * 100)}%`;
 });
 
 const fetchTask = () => {
