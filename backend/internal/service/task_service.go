@@ -23,6 +23,7 @@ var (
 type CreateConversionTaskInput struct {
 	SourceText string
 	Chapters   []domain.Chapter
+	AIConfig   domain.AIConfig
 }
 
 type TaskService struct {
@@ -48,6 +49,7 @@ func (service *TaskService) Create(input CreateConversionTaskInput) (domain.Conv
 		Stage:      "任务已创建，等待进入转换流程。",
 		SourceText: strings.TrimSpace(input.SourceText),
 		Chapters:   input.Chapters,
+		AIConfig:   input.AIConfig,
 		CreatedAt:  now,
 		UpdatedAt:  now,
 	}
@@ -94,7 +96,21 @@ func (service *TaskService) complete(task domain.ConversionTask, now time.Time) 
 		return task
 	}
 
-	draft, err := service.aiClient.GenerateDraft(context.Background(), ai.DraftInput{
+	client := service.aiClient
+	if task.AIConfig.APIKey != "" && task.AIConfig.Model != "" {
+		realClient, err := ai.NewOpenAICompatibleClient(ai.ProviderConfig{
+			Provider: task.AIConfig.Provider,
+			BaseURL:  task.AIConfig.BaseURL,
+			Model:    task.AIConfig.Model,
+			APIKey:   task.AIConfig.APIKey,
+		})
+		if err != nil {
+			return service.fail(task, now, "AI 配置无效。", "AI 配置不完整，请检查模型、Base URL 和 API Key。")
+		}
+		client = realClient
+	}
+
+	draft, err := client.GenerateDraft(context.Background(), ai.DraftInput{
 		SourceText: task.SourceText,
 		Chapters:   task.Chapters,
 	})

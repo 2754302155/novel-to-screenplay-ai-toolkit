@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import {
   createConversionTask,
   getConversionTask,
+  type AIProviderConfig,
   type ConversionTask,
   type ParsedChapter
 } from '../services/api';
@@ -15,12 +16,12 @@ export const useConversionTaskStore = defineStore('conversionTask', {
     errorMessage: ''
   }),
   actions: {
-    async create(sourceText: string, chapters: ParsedChapter[]) {
+    async create(sourceText: string, chapters: ParsedChapter[], aiConfig?: AIProviderConfig) {
       this.isCreating = true;
       this.errorMessage = '';
 
       try {
-        const task = await createConversionTask(sourceText, chapters);
+        const task = await createConversionTask(sourceText, chapters, aiConfig);
         this.currentTask = task;
         return task;
       } catch {

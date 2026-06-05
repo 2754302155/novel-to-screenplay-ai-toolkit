@@ -13,6 +13,7 @@ import (
 type CreateConversionTaskRequest struct {
 	SourceText string           `json:"source_text"`
 	Chapters   []domain.Chapter `json:"chapters"`
+	AIConfig   domain.AIConfig  `json:"ai_config"`
 }
 
 func registerTaskRoutes(router *gin.RouterGroup, taskService *service.TaskService) {
@@ -29,6 +30,7 @@ func registerTaskRoutes(router *gin.RouterGroup, taskService *service.TaskServic
 		task, err := taskService.Create(service.CreateConversionTaskInput{
 			SourceText: request.SourceText,
 			Chapters:   request.Chapters,
+			AIConfig:   request.AIConfig,
 		})
 		if errors.Is(err, service.ErrInvalidTaskInput) {
 			ctx.JSON(http.StatusUnprocessableEntity, gin.H{

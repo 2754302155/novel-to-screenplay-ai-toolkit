@@ -28,3 +28,10 @@ func TestLocalClientGeneratesDraft(t *testing.T) {
 		t.Fatalf("expected 3 scenes, got %d", len(draft.Scenes))
 	}
 }
+
+func TestOpenAICompatibleClientRequiresConfig(t *testing.T) {
+	_, err := NewOpenAICompatibleClient(ProviderConfig{Model: "gpt-4.1"})
+	if err == nil {
+		t.Fatal("expected missing api key error")
+	}
+}

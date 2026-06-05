@@ -19,9 +19,17 @@ type ConversionTask struct {
 	Stage        string               `json:"stage"`
 	SourceText   string               `json:"source_text,omitempty"`
 	Chapters     []Chapter            `json:"chapters"`
+	AIConfig     AIConfig             `json:"-"`
 	Draft        *ScreenplayDraft     `json:"draft,omitempty"`
 	YAML         string               `json:"yaml,omitempty"`
 	ErrorMessage string               `json:"error_message,omitempty"`
 	CreatedAt    time.Time            `json:"created_at"`
 	UpdatedAt    time.Time            `json:"updated_at"`
+}
+
+type AIConfig struct {
+	Provider string `json:"provider"`
+	BaseURL  string `json:"base_url"`
+	Model    string `json:"model"`
+	APIKey   string `json:"api_key,omitempty"`
 }

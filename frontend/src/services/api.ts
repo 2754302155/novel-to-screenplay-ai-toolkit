@@ -33,6 +33,18 @@ export interface ConversionTask {
   updated_at: string;
 }
 
+export interface AIProviderConfig {
+  provider: string;
+  base_url: string;
+  model: string;
+  api_key: string;
+}
+
+export interface TestAIResponse {
+  ok: boolean;
+  message: string;
+}
+
 export interface ParseChaptersResponse {
   chapters: ParsedChapter[];
   cleaned_text: string;
@@ -66,10 +78,15 @@ export async function parseChapters(text: string): Promise<ParseChaptersResponse
   }
 }
 
-export async function createConversionTask(sourceText: string, chapters: ParsedChapter[]): Promise<ConversionTask> {
+export async function createConversionTask(
+  sourceText: string,
+  chapters: ParsedChapter[],
+  aiConfig?: AIProviderConfig
+): Promise<ConversionTask> {
   const response = await api.post<ConversionTask>('/conversion-tasks', {
     source_text: sourceText,
-    chapters
+    chapters,
+    ai_config: aiConfig
   });
   return response.data;
 }
@@ -77,4 +94,19 @@ export async function createConversionTask(sourceText: string, chapters: ParsedC
 export async function getConversionTask(taskId: string): Promise<ConversionTask> {
   const response = await api.get<ConversionTask>(`/conversion-tasks/${taskId}`);
   return response.data;
+}
+
+export async function testAIConnection(aiConfig: AIProviderConfig): Promise<TestAIResponse> {
+  try {
+    const response = await api.post<TestAIResponse>('/ai/test', aiConfig, {
+      timeout: 35000
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError<TestAIResponse>(error) && error.response?.data) {
+      return error.response.data;
+    }
+
+    throw error;
+  }
 }
