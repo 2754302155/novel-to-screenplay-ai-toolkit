@@ -1,0 +1,44 @@
+services:
+  frontend:
+    build:
+      context: ../frontend
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ../backend
+    environment:
+      APP_ENV: development
+      APP_VERSION: 0.1.0
+      PORT: 8080
+      DATABASE_URL: postgres://screenplay:screenplay@postgres:5432/screenplay?sslmode=disable
+      REDIS_ADDR: redis:6379
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: screenplay
+      POSTGRES_USER: screenplay
+      POSTGRES_PASSWORD: screenplay
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.4-alpine
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "8088:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  postgres-data:
