@@ -20,6 +20,7 @@ type ConversionTask struct {
 	SourceText   string               `json:"source_text,omitempty"`
 	Chapters     []Chapter            `json:"chapters"`
 	Draft        *ScreenplayDraft     `json:"draft,omitempty"`
+	YAML         string               `json:"yaml,omitempty"`
 	ErrorMessage string               `json:"error_message,omitempty"`
 	CreatedAt    time.Time            `json:"created_at"`
 	UpdatedAt    time.Time            `json:"updated_at"`
