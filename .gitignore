@@ -1,7 +1,22 @@
-.DS_Store
+# Dependencies
 node_modules/
+
+# Frontend build output
 dist/
 build/
+frontend/dist/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo
+
+# Go build and test output
+backend/server
+backend/novel-to-screenplay-api
+*.test
+
+# Local environment
 .env
 .env.*
 *.log
+
+# System files
+.DS_Store

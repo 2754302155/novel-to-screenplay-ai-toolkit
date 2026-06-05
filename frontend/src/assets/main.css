@@ -1,0 +1,149 @@
+:root {
+  color: #17202a;
+  background: #f5f7fb;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  min-width: 88px;
+  height: 36px;
+  border: 1px solid #b9c3cf;
+  border-radius: 6px;
+  color: #17202a;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #eef3f8;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px 24px;
+  color: #ffffff;
+  background: #12343b;
+}
+
+.sidebar h1 {
+  margin: 8px 0 0;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.sidebar nav {
+  display: grid;
+  gap: 8px;
+}
+
+.sidebar a {
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #dce7ea;
+}
+
+.sidebar a.router-link-active,
+.sidebar a:hover {
+  color: #ffffff;
+  background: rgb(255 255 255 / 12%);
+}
+
+.content {
+  padding: 40px;
+}
+
+.page-section {
+  max-width: 960px;
+}
+
+.section-heading h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.section-heading p {
+  max-width: 680px;
+  margin: 0;
+  color: #51606f;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #7aa7b2;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.status-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(100%, 520px);
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.label {
+  display: block;
+  margin-bottom: 4px;
+  color: #657384;
+  font-size: 13px;
+}
+
+.status-panel strong {
+  font-size: 18px;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    padding: 24px;
+  }
+
+  .content {
+    padding: 28px 20px;
+  }
+
+  .status-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
