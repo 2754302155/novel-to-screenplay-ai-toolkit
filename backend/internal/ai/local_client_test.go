@@ -36,7 +36,7 @@ func TestOpenAICompatibleClientRequiresConfig(t *testing.T) {
 	}
 }
 
-func TestOpenAICompatibleClientNormalizesBaseURL(t *testing.T) {
+func TestOpenAICompatibleClientNormalizesEndpoint(t *testing.T) {
 	tests := []struct {
 		name     string
 		baseURL  string
@@ -45,22 +45,32 @@ func TestOpenAICompatibleClientNormalizesBaseURL(t *testing.T) {
 		{
 			name:     "uses default",
 			baseURL:  "",
-			expected: defaultOpenAICompatibleBaseURL,
+			expected: defaultOpenAICompatibleBaseURL + "/v1/chat/completions",
 		},
 		{
-			name:     "adds v1",
+			name:     "adds v1 chat completions",
 			baseURL:  "https://api.openai.com",
-			expected: "https://api.openai.com/v1",
+			expected: "https://api.openai.com/v1/chat/completions",
 		},
 		{
-			name:     "keeps existing v1",
+			name:     "adds chat completions after existing v1",
 			baseURL:  "https://api.openai.com/v1",
-			expected: "https://api.openai.com/v1",
+			expected: "https://api.openai.com/v1/chat/completions",
 		},
 		{
-			name:     "trims trailing slash",
+			name:     "trims trailing slash after v1",
 			baseURL:  "https://api.openai.com/v1/",
-			expected: "https://api.openai.com/v1",
+			expected: "https://api.openai.com/v1/chat/completions",
+		},
+		{
+			name:     "keeps custom endpoint after v1",
+			baseURL:  "https://api.openai.com/v1/custom/completions",
+			expected: "https://api.openai.com/v1/custom/completions",
+		},
+		{
+			name:     "trims custom endpoint trailing slash",
+			baseURL:  "https://api.openai.com/v1/custom/completions/",
+			expected: "https://api.openai.com/v1/custom/completions",
 		},
 	}
 

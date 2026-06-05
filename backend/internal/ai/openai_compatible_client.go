@@ -15,7 +15,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const defaultOpenAICompatibleBaseURL = "https://api.openai.com/v1"
+const defaultOpenAICompatibleBaseURL = "https://api.openai.com"
 
 type OpenAICompatibleClient struct {
 	config     ProviderConfig
@@ -43,7 +43,7 @@ type chatCompletionResponse struct {
 }
 
 func NewOpenAICompatibleClient(config ProviderConfig) (*OpenAICompatibleClient, error) {
-	config.BaseURL = normalizeOpenAICompatibleBaseURL(config.BaseURL)
+	config.BaseURL = normalizeOpenAICompatibleEndpoint(config.BaseURL)
 	config.Model = strings.TrimSpace(config.Model)
 	config.APIKey = strings.TrimSpace(config.APIKey)
 
@@ -62,15 +62,18 @@ func NewOpenAICompatibleClient(config ProviderConfig) (*OpenAICompatibleClient, 
 	}, nil
 }
 
-func normalizeOpenAICompatibleBaseURL(baseURL string) string {
+func normalizeOpenAICompatibleEndpoint(baseURL string) string {
 	trimmed := strings.TrimRight(strings.TrimSpace(baseURL), "/")
 	if trimmed == "" {
-		return defaultOpenAICompatibleBaseURL
+		return defaultOpenAICompatibleBaseURL + "/v1/chat/completions"
 	}
-	if strings.HasSuffix(trimmed, "/v1") {
+	if strings.Contains(trimmed, "/v1/") {
 		return trimmed
 	}
-	return trimmed + "/v1"
+	if strings.HasSuffix(trimmed, "/v1") {
+		return trimmed + "/chat/completions"
+	}
+	return trimmed + "/v1/chat/completions"
 }
 
 func (client *OpenAICompatibleClient) GenerateDraft(ctx context.Context, input DraftInput) (domain.ScreenplayDraft, error) {
@@ -122,7 +125,7 @@ func (client *OpenAICompatibleClient) chat(ctx context.Context, messages []chatM
 		return "", err
 	}
 
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, client.config.BaseURL+"/chat/completions", bytes.NewReader(body))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, client.config.BaseURL, bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
