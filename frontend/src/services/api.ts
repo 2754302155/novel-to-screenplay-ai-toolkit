@@ -33,6 +33,10 @@ export interface ConversionTask {
   updated_at: string;
 }
 
+export interface ConversionTaskListResponse {
+  tasks: ConversionTask[];
+}
+
 export interface AIProviderConfig {
   provider: string;
   base_url: string;
@@ -94,6 +98,11 @@ export async function createConversionTask(
 export async function getConversionTask(taskId: string): Promise<ConversionTask> {
   const response = await api.get<ConversionTask>(`/conversion-tasks/${taskId}`);
   return response.data;
+}
+
+export async function listConversionTasks(): Promise<ConversionTask[]> {
+  const response = await api.get<ConversionTaskListResponse>('/conversion-tasks');
+  return response.data.tasks;
 }
 
 export async function testAIConnection(aiConfig: AIProviderConfig): Promise<TestAIResponse> {

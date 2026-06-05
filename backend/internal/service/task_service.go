@@ -68,6 +68,14 @@ func (service *TaskService) Get(id string) (domain.ConversionTask, error) {
 	return service.advance(task), nil
 }
 
+func (service *TaskService) List() []domain.ConversionTask {
+	tasks := service.repository.FindAll()
+	for index := range tasks {
+		tasks[index] = service.advance(tasks[index])
+	}
+	return tasks
+}
+
 func (service *TaskService) advance(task domain.ConversionTask) domain.ConversionTask {
 	now := service.now().UTC()
 	elapsed := now.Sub(task.CreatedAt)

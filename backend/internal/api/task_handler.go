@@ -17,6 +17,12 @@ type CreateConversionTaskRequest struct {
 }
 
 func registerTaskRoutes(router *gin.RouterGroup, taskService *service.TaskService) {
+	router.GET("/conversion-tasks", func(ctx *gin.Context) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"tasks": taskService.List(),
+		})
+	})
+
 	router.POST("/conversion-tasks", func(ctx *gin.Context) {
 		var request CreateConversionTaskRequest
 		if err := ctx.ShouldBindJSON(&request); err != nil {

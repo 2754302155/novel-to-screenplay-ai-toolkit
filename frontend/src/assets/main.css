@@ -394,6 +394,17 @@ input {
   font-weight: 700;
 }
 
+.status-badge.compact {
+  min-width: 64px;
+  height: 28px;
+}
+
+.task-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  word-break: break-all;
+}
+
 .progress-track {
   height: 12px;
   margin-top: 22px;
