@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -127,6 +128,53 @@ func TestTaskServiceStartsCompletionOnce(t *testing.T) {
 	waitForTaskStatus(t, repo, task.ID, domain.TaskStatusCompleted)
 }
 
+func TestTaskServiceCompletesWithFallbackChunks(t *testing.T) {
+	repo := repository.NewTaskRepository()
+	service := NewTaskService(repo, failingClient{})
+	startedAt := time.Date(2026, 6, 5, 10, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return startedAt }
+
+	task, err := service.Create(CreateConversionTaskInput{
+		SourceText: "正文",
+		Chapters: []domain.Chapter{
+			{ID: "CH001", Title: "第一章", WordCount: 10, Body: "第一章正文"},
+			{ID: "CH002", Title: "第二章", WordCount: 10, Body: "第二章正文"},
+			{ID: "CH003", Title: "第三章", WordCount: 10, Body: "第三章正文"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("create task: %v", err)
+	}
+
+	service.now = func() time.Time { return startedAt.Add(7 * time.Second) }
+	if _, err := service.Get(task.ID); err != nil {
+		t.Fatalf("get task: %v", err)
+	}
+
+	task = waitForTaskStatus(t, repo, task.ID, domain.TaskStatusCompleted)
+	if task.TotalChunks != 3 || task.CompletedChunks != 3 {
+		t.Fatalf("expected 3 completed chunks, got %d/%d", task.CompletedChunks, task.TotalChunks)
+	}
+	if task.Draft == nil || len(task.Draft.QualityReport.HumanReviewRequired) == 0 {
+		t.Fatalf("expected fallback draft with human review warnings")
+	}
+}
+
+func TestBuildDraftChunksSplitsLongChapterBody(t *testing.T) {
+	chunks := buildDraftChunks("", []domain.Chapter{
+		{ID: "CH001", Title: "第一章", WordCount: 7000, Body: strings.Repeat("甲", maxDraftChunkChars+100)},
+		{ID: "CH002", Title: "第二章", WordCount: 10, Body: "乙"},
+		{ID: "CH003", Title: "第三章", WordCount: 10, Body: "丙"},
+	})
+
+	if len(chunks) != 4 {
+		t.Fatalf("expected 4 chunks, got %d", len(chunks))
+	}
+	if chunks[0].Label != "第一章 分段 1" || chunks[1].Label != "第一章 分段 2" {
+		t.Fatalf("expected split labels, got %q and %q", chunks[0].Label, chunks[1].Label)
+	}
+}
+
 func sampleTaskChapters() []domain.Chapter {
 	return []domain.Chapter{
 		{ID: "CH001", Title: "第一章", WordCount: 10},
@@ -163,6 +211,12 @@ type blockingClient struct {
 	ready chan struct{}
 	mu    sync.Mutex
 	calls int
+}
+
+type failingClient struct{}
+
+func (client failingClient) GenerateDraft(ctx context.Context, input ai.DraftInput) (domain.ScreenplayDraft, error) {
+	return domain.ScreenplayDraft{}, errors.New("forced chunk failure")
 }
 
 func (client *blockingClient) GenerateDraft(ctx context.Context, input ai.DraftInput) (domain.ScreenplayDraft, error) {

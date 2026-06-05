@@ -6,13 +6,14 @@ import {
   listConversionTasks,
   type AIProviderConfig,
   type ConversionTask,
+  type ConversionTaskSummary,
   type ParsedChapter
 } from '../services/api';
 
 export const useConversionTaskStore = defineStore('conversionTask', {
   state: () => ({
     currentTask: null as ConversionTask | null,
-    tasks: [] as ConversionTask[],
+    tasks: [] as ConversionTaskSummary[],
     isCreating: false,
     isLoading: false,
     errorMessage: ''

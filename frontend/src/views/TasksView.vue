@@ -17,6 +17,7 @@
             <th>任务 ID</th>
             <th>状态</th>
             <th>进度</th>
+            <th>文本块</th>
             <th>章节</th>
             <th>当前阶段</th>
             <th>创建时间</th>
@@ -32,7 +33,8 @@
               <span class="status-badge compact">{{ statusLabel(task.status) }}</span>
             </td>
             <td>{{ task.progress }}%</td>
-            <td>{{ task.chapters.length }}</td>
+            <td>{{ chunkProgress(task) }}</td>
+            <td>{{ task.chapter_count }}</td>
             <td>{{ task.stage }}</td>
             <td>{{ formatTime(task.created_at) }}</td>
             <td>
@@ -55,12 +57,12 @@
 import { onBeforeUnmount, onMounted } from 'vue';
 
 import { useConversionTaskStore } from '../stores/conversionTask';
-import type { ConversionTask } from '../services/api';
+import type { ConversionTaskSummary } from '../services/api';
 
 const taskStore = useConversionTaskStore();
 let timer: number | undefined;
 
-const statusLabel = (status: ConversionTask['status']) => {
+const statusLabel = (status: ConversionTaskSummary['status']) => {
   switch (status) {
     case 'processing':
       return '处理中';
@@ -82,6 +84,13 @@ const formatTime = (value: string) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(new Date(value));
+};
+
+const chunkProgress = (task: ConversionTaskSummary) => {
+  if (!task.total_chunks) {
+    return '-';
+  }
+  return `${task.completed_chunks ?? 0}/${task.total_chunks}`;
 };
 
 onMounted(() => {

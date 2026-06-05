@@ -29,12 +29,29 @@ export interface ConversionTask {
   draft?: unknown;
   yaml?: string;
   error_message?: string;
+  total_chunks?: number;
+  completed_chunks?: number;
+  current_chunk?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConversionTaskSummary {
+  id: string;
+  status: ConversionTask['status'];
+  progress: number;
+  stage: string;
+  chapter_count: number;
+  total_chunks?: number;
+  completed_chunks?: number;
+  current_chunk?: string;
+  error_message?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface ConversionTaskListResponse {
-  tasks: ConversionTask[];
+  tasks: ConversionTaskSummary[];
 }
 
 export interface AIProviderConfig {
@@ -100,7 +117,7 @@ export async function getConversionTask(taskId: string): Promise<ConversionTask>
   return response.data;
 }
 
-export async function listConversionTasks(): Promise<ConversionTask[]> {
+export async function listConversionTasks(): Promise<ConversionTaskSummary[]> {
   const response = await api.get<ConversionTaskListResponse>('/conversion-tasks');
   return response.data.tasks;
 }

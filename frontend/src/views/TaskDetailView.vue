@@ -33,8 +33,16 @@
           <strong>{{ task.chapters.length }}</strong>
         </div>
         <div>
+          <span class="label">文本块</span>
+          <strong>{{ chunkProgress }}</strong>
+        </div>
+        <div>
           <span class="label">当前阶段</span>
           <strong>{{ task.stage }}</strong>
+        </div>
+        <div v-if="task.current_chunk">
+          <span class="label">当前文本块</span>
+          <strong>{{ task.current_chunk }}</strong>
         </div>
       </div>
 
@@ -86,6 +94,12 @@ const statusLabel = computed(() => {
     default:
       return '等待中';
   }
+});
+const chunkProgress = computed(() => {
+  if (!task.value?.total_chunks) {
+    return '-';
+  }
+  return `${task.value.completed_chunks ?? 0}/${task.value.total_chunks}`;
 });
 
 const fetchTask = () => {

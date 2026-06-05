@@ -21,6 +21,9 @@ type ConversionTask struct {
 	Chapters          []Chapter            `json:"chapters"`
 	AIConfig          AIConfig             `json:"-"`
 	GenerationStarted bool                 `json:"-"`
+	TotalChunks       int                  `json:"total_chunks,omitempty"`
+	CompletedChunks   int                  `json:"completed_chunks,omitempty"`
+	CurrentChunk      string               `json:"current_chunk,omitempty"`
 	Draft             *ScreenplayDraft     `json:"draft,omitempty"`
 	YAML              string               `json:"yaml,omitempty"`
 	ErrorMessage      string               `json:"error_message,omitempty"`

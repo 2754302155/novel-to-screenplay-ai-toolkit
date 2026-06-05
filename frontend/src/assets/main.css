@@ -423,7 +423,7 @@ input {
 
 .task-meta {
   display: grid;
-  grid-template-columns: 120px 120px minmax(0, 1fr);
+  grid-template-columns: 120px 120px 120px minmax(0, 1fr);
   gap: 18px;
   margin-top: 22px;
 }

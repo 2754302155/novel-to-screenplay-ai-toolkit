@@ -1,7 +1,6 @@
 package service
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -149,10 +148,7 @@ func (service *TaskService) complete(task domain.ConversionTask, now time.Time) 
 		client = realClient
 	}
 
-	draft, err := client.GenerateDraft(context.Background(), ai.DraftInput{
-		SourceText: task.SourceText,
-		Chapters:   task.Chapters,
-	})
+	draft, err := service.generateDraft(task, client)
 	if err != nil {
 		return service.fail(task, service.now().UTC(), "AI 剧本初稿生成失败。", "AI 剧本初稿生成失败："+err.Error())
 	}
@@ -171,6 +167,9 @@ func (service *TaskService) complete(task domain.ConversionTask, now time.Time) 
 		return service.fail(task, service.now().UTC(), "YAML 序列化失败。", "剧本初稿导出失败，请稍后重试。")
 	}
 
+	if current, err := service.repository.FindByID(task.ID); err == nil {
+		task = current
+	}
 	now = service.now().UTC()
 	task.Status = domain.TaskStatusCompleted
 	task.Progress = 100
