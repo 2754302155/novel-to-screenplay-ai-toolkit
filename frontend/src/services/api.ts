@@ -32,6 +32,17 @@ export interface ScreenplayDraft {
   quality_report?: QualityReport;
 }
 
+export interface ValidationIssue {
+  path: string;
+  message: string;
+}
+
+export interface ValidateYAMLResponse {
+  valid: boolean;
+  issues: ValidationIssue[];
+  quality_report: QualityReport;
+}
+
 export interface ConversionTask {
   id: string;
   status: 'pending' | 'processing' | 'validating' | 'completed' | 'failed';
@@ -133,6 +144,13 @@ export async function getConversionTask(taskId: string): Promise<ConversionTask>
 export async function listConversionTasks(): Promise<ConversionTaskSummary[]> {
   const response = await api.get<ConversionTaskListResponse>('/conversion-tasks');
   return response.data.tasks;
+}
+
+export async function validateYAML(yamlText: string): Promise<ValidateYAMLResponse> {
+  const response = await api.post<ValidateYAMLResponse>('/yaml/validate', {
+    yaml: yamlText
+  });
+  return response.data;
 }
 
 export async function testAIConnection(aiConfig: AIProviderConfig): Promise<TestAIResponse> {

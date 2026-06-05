@@ -112,6 +112,30 @@ func TestListConversionTasks(t *testing.T) {
 	}
 }
 
+func TestExportConversionTaskRequiresCompletedTask(t *testing.T) {
+	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
+	body := []byte(`{"source_text":"正文","chapters":[{"id":"CH001","title":"第一章","word_count":10},{"id":"CH002","title":"第二章","word_count":10},{"id":"CH003","title":"第三章","word_count":10}]}`)
+	createRequest := httptest.NewRequest(http.MethodPost, "/api/conversion-tasks", bytes.NewReader(body))
+	createRequest.Header.Set("Content-Type", "application/json")
+	createResponse := httptest.NewRecorder()
+	router.ServeHTTP(createResponse, createRequest)
+	if createResponse.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d: %s", createResponse.Code, createResponse.Body.String())
+	}
+
+	taskID := extractJSONValue(createResponse.Body.String(), "id")
+	request := httptest.NewRequest(http.MethodGet, "/api/conversion-tasks/"+taskID+"/export", nil)
+	response := httptest.NewRecorder()
+	router.ServeHTTP(response, request)
+
+	if response.Code != http.StatusConflict {
+		t.Fatalf("expected status 409, got %d: %s", response.Code, response.Body.String())
+	}
+	if body := response.Body.String(); !contains(body, "TASK_NOT_READY") {
+		t.Fatalf("expected not ready error, got %s", body)
+	}
+}
+
 func TestCreateConversionTaskBlocksInsufficientChapters(t *testing.T) {
 	router := NewRouter(config.Config{Environment: "test", Version: "0.1.0-test"})
 	body := []byte(`{"source_text":"正文","chapters":[{"id":"CH001","title":"第一章","word_count":10}]}`)
@@ -176,6 +200,20 @@ func TestValidateYAMLReturnsParseIssue(t *testing.T) {
 
 func contains(value string, needle string) bool {
 	return len(value) >= len(needle) && (value == needle || len(needle) == 0 || index(value, needle) >= 0)
+}
+
+func extractJSONValue(body string, key string) string {
+	prefix := `"` + key + `":"`
+	start := index(body, prefix)
+	if start < 0 {
+		return ""
+	}
+	start += len(prefix)
+	end := start
+	for end < len(body) && body[end] != '"' {
+		end++
+	}
+	return body[start:end]
 }
 
 func index(value string, needle string) int {
