@@ -493,17 +493,101 @@ input {
   margin-bottom: 10px;
 }
 
-.yaml-preview pre {
-  max-height: 420px;
-  overflow: auto;
+.yaml-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.yaml-editor {
+  width: 100%;
+  min-height: 420px;
+  max-height: 620px;
   border: 1px solid #d7dee8;
   border-radius: 8px;
-  margin: 0;
   padding: 14px;
+  resize: vertical;
   background: #f8fafc;
   color: #253241;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
   line-height: 1.55;
   white-space: pre;
+}
+
+.yaml-editor:focus {
+  border-color: #2f7784;
+  outline: 3px solid rgb(47 119 132 / 18%);
+}
+
+.editor-message {
+  margin: 10px 0 0;
+  color: #51606f;
+  font-size: 14px;
+}
+
+.validation-panel {
+  margin-top: 14px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fbfcfe;
+}
+
+.validation-panel.success {
+  border-color: #92c9aa;
+  background: #f3fbf6;
+}
+
+.validation-panel.error {
+  border-color: #e0a1a1;
+  background: #fff7f7;
+}
+
+.validation-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.validation-summary strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.validation-issues {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.validation-issues li {
+  border: 1px solid #ead0d0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #ffffff;
+}
+
+.validation-issues span {
+  display: block;
+  margin-bottom: 4px;
+  color: #657384;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.validation-issues strong {
+  color: #7d1f1f;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.compact-grid {
+  margin-top: 14px;
 }
 
 table {
@@ -561,5 +645,20 @@ td {
   .task-progress-header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .yaml-preview-header,
+  .validation-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .yaml-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .yaml-actions button {
+    flex: 1 1 140px;
   }
 }

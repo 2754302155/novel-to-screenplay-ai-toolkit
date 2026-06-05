@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -76,6 +78,34 @@ func registerTaskRoutes(router *gin.RouterGroup, taskService *service.TaskServic
 		}
 
 		ctx.JSON(http.StatusCreated, task)
+	})
+
+	router.GET("/conversion-tasks/:id/export", func(ctx *gin.Context) {
+		task, err := taskService.Get(ctx.Param("id"))
+		if errors.Is(err, service.ErrTaskNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"code":    "TASK_NOT_FOUND",
+				"message": "未找到该转换任务。",
+			})
+			return
+		}
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"code":    "TASK_QUERY_FAILED",
+				"message": "转换任务查询失败，请稍后重试。",
+			})
+			return
+		}
+		if task.Status != domain.TaskStatusCompleted || strings.TrimSpace(task.YAML) == "" {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"code":    "TASK_NOT_READY",
+				"message": "剧本 YAML 尚未生成，完成后再下载。",
+			})
+			return
+		}
+
+		ctx.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="screenplay-%s.yaml"`, task.ID))
+		ctx.Data(http.StatusOK, "application/x-yaml; charset=utf-8", []byte(task.YAML))
 	})
 
 	router.GET("/conversion-tasks/:id", func(ctx *gin.Context) {

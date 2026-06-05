@@ -99,10 +99,64 @@
         <div class="yaml-preview-header">
           <div>
             <span class="label">生成结果</span>
-            <strong>YAML 剧本初稿</strong>
+            <strong>YAML 剧本初稿编辑</strong>
+          </div>
+          <div class="yaml-actions">
+            <button type="button" :disabled="isValidating || !yamlText.trim()" @click="runValidation">
+              {{ isValidating ? '校验中' : '重新校验' }}
+            </button>
+            <button type="button" :disabled="!yamlText.trim()" @click="downloadYAML">下载当前 YAML</button>
+            <button type="button" @click="resetYAML">恢复生成结果</button>
           </div>
         </div>
-        <pre><code>{{ task.yaml }}</code></pre>
+        <textarea
+          v-model="yamlText"
+          class="yaml-editor"
+          spellcheck="false"
+          aria-label="YAML 剧本初稿编辑器"
+        />
+
+        <p v-if="editorMessage" class="editor-message">{{ editorMessage }}</p>
+
+        <div
+          v-if="validationResult"
+          class="validation-panel"
+          :class="{ success: validationResult.valid, error: !validationResult.valid }"
+        >
+          <div class="validation-summary">
+            <div>
+              <span class="label">校验结果</span>
+              <strong>{{ validationResult.valid ? 'YAML 结构有效' : '发现需要修复的问题' }}</strong>
+            </div>
+            <span class="status-badge compact">{{ validationResult.issues.length }} 项</span>
+          </div>
+
+          <ul v-if="validationResult.issues.length > 0" class="validation-issues">
+            <li v-for="issue in validationResult.issues" :key="`${issue.path}-${issue.message}`">
+              <span>{{ issue.path || 'root' }}</span>
+              <strong>{{ issue.message }}</strong>
+            </li>
+          </ul>
+
+          <div v-if="validationResult.quality_report" class="quality-grid compact-grid">
+            <div>
+              <span class="label">已覆盖章节</span>
+              <strong>{{ validationResult.quality_report.coverage.converted_chapters }}</strong>
+            </div>
+            <div>
+              <span class="label">未处理比例</span>
+              <strong>{{ validationUnconvertedRate }}</strong>
+            </div>
+            <div>
+              <span class="label">警告数量</span>
+              <strong>{{ validationResult.quality_report.warnings.length }}</strong>
+            </div>
+            <div>
+              <span class="label">人工确认项</span>
+              <strong>{{ validationResult.quality_report.human_review_required.length }}</strong>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -115,15 +169,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
+import { validateYAML, type ValidateYAMLResponse } from '../services/api';
 import { useConversionTaskStore } from '../stores/conversionTask';
 
 const route = useRoute();
 const taskStore = useConversionTaskStore();
 let timer: number | undefined;
 
+const yamlText = ref('');
+const editorMessage = ref('');
+const validationResult = ref<ValidateYAMLResponse | null>(null);
+const isValidating = ref(false);
 const taskId = computed(() => String(route.params.id ?? ''));
 const task = computed(() => taskStore.currentTask);
 const statusLabel = computed(() => {
@@ -151,6 +210,64 @@ const unconvertedRate = computed(() => {
   const rate = qualityReport.value?.coverage.estimated_unconverted_ratio ?? 0;
   return `${Math.round(rate * 100)}%`;
 });
+const validationUnconvertedRate = computed(() => {
+  const rate = validationResult.value?.quality_report.coverage.estimated_unconverted_ratio ?? 0;
+  return `${Math.round(rate * 100)}%`;
+});
+
+watch(
+  () => task.value?.yaml,
+  (yaml) => {
+    if (yaml && yamlText.value === '') {
+      yamlText.value = yaml;
+    }
+  },
+  { immediate: true }
+);
+
+const resetYAML = () => {
+  yamlText.value = task.value?.yaml ?? '';
+  validationResult.value = null;
+  editorMessage.value = '已恢复为 AI 生成的原始 YAML。';
+};
+
+const runValidation = async () => {
+  if (!yamlText.value.trim()) {
+    validationResult.value = null;
+    editorMessage.value = 'YAML 内容为空，无法校验。';
+    return;
+  }
+
+  isValidating.value = true;
+  editorMessage.value = '';
+  try {
+    validationResult.value = await validateYAML(yamlText.value);
+    editorMessage.value = validationResult.value.valid
+      ? 'YAML 校验通过，可下载或继续编辑。'
+      : 'YAML 校验发现问题，请按提示修正后再次校验。';
+  } catch {
+    validationResult.value = null;
+    editorMessage.value = 'YAML 校验请求失败，请稍后重试。';
+  } finally {
+    isValidating.value = false;
+  }
+};
+
+const downloadYAML = () => {
+  if (!yamlText.value.trim()) {
+    editorMessage.value = 'YAML 内容为空，无法下载。';
+    return;
+  }
+
+  const blob = new Blob([yamlText.value], { type: 'application/x-yaml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `screenplay-${task.value?.id ?? 'draft'}.yaml`;
+  link.click();
+  URL.revokeObjectURL(url);
+  editorMessage.value = '已下载当前编辑内容。';
+};
 
 const fetchTask = () => {
   if (taskId.value) {
