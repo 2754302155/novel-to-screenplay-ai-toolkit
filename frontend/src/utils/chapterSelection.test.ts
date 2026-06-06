@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSelectedChapterSourceText,
   isChapterInRange,
+  MAX_SELECTED_WORDS,
   MIN_SELECTED_CHAPTERS,
-  normalizeChapterRange
+  normalizeChapterRange,
+  sumChapterWordCount
 } from './chapterSelection';
 
 describe('chapter selection utilities', () => {
@@ -42,5 +44,15 @@ describe('chapter selection utilities', () => {
     ]);
 
     expect(sourceText).toBe('第一章\n正文一\n\n第二章\n正文二');
+  });
+
+  it('sums selected chapter word counts for conversion limits', () => {
+    const total = sumChapterWordCount([
+      { word_count: 30000 },
+      { word_count: 40000 },
+      { word_count: 30000 }
+    ]);
+
+    expect(total).toBe(MAX_SELECTED_WORDS);
   });
 });

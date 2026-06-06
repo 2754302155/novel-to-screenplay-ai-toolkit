@@ -323,6 +323,26 @@ input {
   font-size: 34px;
 }
 
+.upload-progress {
+  width: min(100%, 520px);
+  margin-top: 18px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.upload-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.upload-progress-header strong {
+  font-size: 18px;
+}
+
 .import-summary p,
 .empty-state p {
   margin: 10px 0 0;
@@ -345,6 +365,12 @@ input {
   border: 1px solid #e3c16f;
   color: #6f5014;
   background: #fff8df;
+}
+
+.alert-success {
+  border: 1px solid #92c9aa;
+  color: #1f6b43;
+  background: #f3fbf6;
 }
 
 .parse-preview,
@@ -386,6 +412,36 @@ input {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
+}
+
+.over-limit-text {
+  color: #9b2c2c;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.pagination-bar strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-actions span {
+  min-width: 72px;
+  color: #344253;
+  font-weight: 700;
+  text-align: center;
 }
 
 .empty-state {
@@ -727,5 +783,18 @@ tr.selected-row td {
 
   .yaml-actions button {
     flex: 1 1 140px;
+  }
+
+  .pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagination-actions {
+    width: 100%;
+  }
+
+  .pagination-actions button {
+    flex: 1 1 120px;
   }
 }

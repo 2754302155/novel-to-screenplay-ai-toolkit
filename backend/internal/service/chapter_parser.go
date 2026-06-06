@@ -18,7 +18,7 @@ type ParseChaptersInput struct {
 
 type ParseChaptersResult struct {
 	Chapters       []ParsedChapter `json:"chapters"`
-	CleanedText    string          `json:"cleaned_text"`
+	CleanedText    string          `json:"cleaned_text,omitempty"`
 	OriginalChars  int             `json:"original_chars"`
 	CleanedChars   int             `json:"cleaned_chars"`
 	ChineseRatio   float64         `json:"chinese_ratio"`
