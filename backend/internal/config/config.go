@@ -6,6 +6,7 @@ type Config struct {
 	Environment string
 	Port        string
 	Version     string
+	DatabaseURL string
 }
 
 func Load() Config {
@@ -13,6 +14,7 @@ func Load() Config {
 		Environment: readEnv("APP_ENV", "development"),
 		Port:        readEnv("PORT", "8080"),
 		Version:     readEnv("APP_VERSION", "0.1.0"),
+		DatabaseURL: readEnv("DATABASE_URL", ""),
 	}
 }
 

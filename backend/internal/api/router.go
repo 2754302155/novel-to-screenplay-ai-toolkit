@@ -1,7 +1,11 @@
 package api
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -30,7 +34,29 @@ func NewRouter(cfg config.Config) *gin.Engine {
 	registerAIRoutes(api)
 	registerChapterRoutes(api)
 	registerYAMLRoutes(api)
-	registerTaskRoutes(api, service.NewTaskService(repository.NewTaskRepository(), ai.NewLocalClient()))
+	registerTaskRoutes(api, service.NewTaskService(newTaskRepository(cfg), ai.NewLocalClient()))
 
 	return router
+}
+
+func newTaskRepository(cfg config.Config) *repository.TaskRepository {
+	if cfg.DatabaseURL == "" {
+		return repository.NewTaskRepository()
+	}
+
+	var lastErr error
+	for attempt := 1; attempt <= 10; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		taskRepository, err := repository.NewPostgresBackedTaskRepository(ctx, cfg.DatabaseURL)
+		cancel()
+		if err == nil {
+			return taskRepository
+		}
+
+		lastErr = err
+		log.Printf("postgres task repository unavailable, retrying (%d/10): %v", attempt, err)
+		time.Sleep(2 * time.Second)
+	}
+
+	panic(fmt.Sprintf("initialize postgres task repository: %v", lastErr))
 }

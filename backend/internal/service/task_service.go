@@ -178,6 +178,7 @@ func (service *TaskService) complete(task domain.ConversionTask, now time.Time) 
 	task.Stage = "剧本 YAML 初稿已生成。"
 	task.Draft = &draft
 	task.YAML = string(yamlText)
+	task.AIConfig.APIKey = ""
 	task.UpdatedAt = now
 	return service.repository.Save(task)
 }
@@ -187,6 +188,7 @@ func (service *TaskService) fail(task domain.ConversionTask, now time.Time, stag
 	task.Progress = 100
 	task.Stage = stage
 	task.ErrorMessage = message
+	task.AIConfig.APIKey = ""
 	task.UpdatedAt = now
 	return service.repository.Save(task)
 }

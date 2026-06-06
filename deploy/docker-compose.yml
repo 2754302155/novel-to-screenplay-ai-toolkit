@@ -15,8 +15,10 @@ services:
       DATABASE_URL: postgres://screenplay:screenplay@postgres:5432/screenplay?sslmode=disable
       REDIS_ADDR: redis:6379
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   postgres:
     image: postgres:17-alpine
@@ -26,6 +28,11 @@ services:
       POSTGRES_PASSWORD: screenplay
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U screenplay -d screenplay"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   redis:
     image: redis:7.4-alpine
