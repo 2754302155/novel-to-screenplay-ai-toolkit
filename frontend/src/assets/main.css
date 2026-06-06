@@ -211,6 +211,23 @@ input {
   outline: 3px solid rgb(47 119 132 / 18%);
 }
 
+.select-field {
+  width: 100%;
+  min-width: 180px;
+  height: 40px;
+  border: 1px solid #c9d3df;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: #17202a;
+  background: #fbfcfe;
+  font: inherit;
+}
+
+.select-field:focus {
+  border-color: #2f7784;
+  outline: 3px solid rgb(47 119 132 / 18%);
+}
+
 .ai-settings-panel {
   margin-top: 22px;
   border: 1px solid #d7dee8;
@@ -345,6 +362,30 @@ input {
   display: block;
   margin-top: 4px;
   font-size: 22px;
+}
+
+.chapter-selection-panel {
+  display: grid;
+  grid-template-columns: 140px 120px 120px minmax(0, 1fr);
+  align-items: end;
+  gap: 16px;
+  margin-top: 18px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 18px;
+  background: #ffffff;
+}
+
+.chapter-selection-panel strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 22px;
+}
+
+.selection-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .empty-state {
@@ -614,6 +655,30 @@ td {
   color: #253241;
 }
 
+tr.selected-row td {
+  background: #eef7f8;
+}
+
+.selection-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 26px;
+  border: 1px solid #d7dee8;
+  border-radius: 999px;
+  color: #657384;
+  background: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.selection-mark.active {
+  border-color: #2f7784;
+  color: #12343b;
+  background: #dff0f2;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -636,6 +701,8 @@ td {
   .settings-grid,
   .parse-preview,
   .confirm-summary,
+  .chapter-selection-panel,
+  .selection-controls,
   .task-meta,
   .quality-grid,
   .quality-columns {
