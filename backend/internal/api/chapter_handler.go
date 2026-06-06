@@ -26,6 +26,7 @@ func registerChapterRoutes(router *gin.RouterGroup) {
 		}
 
 		result := parser.Parse(service.ParseChaptersInput{Text: request.Text})
+		result.CleanedText = ""
 		status := http.StatusOK
 		if len(result.BlockingErrors) > 0 {
 			status = http.StatusUnprocessableEntity

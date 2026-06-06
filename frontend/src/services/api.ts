@@ -92,7 +92,7 @@ export interface TestAIResponse {
 
 export interface ParseChaptersResponse {
   chapters: ParsedChapter[];
-  cleaned_text: string;
+  cleaned_text?: string;
   original_chars: number;
   cleaned_chars: number;
   chinese_ratio: number;
@@ -112,7 +112,9 @@ export async function getHealth(): Promise<HealthResponse> {
 
 export async function parseChapters(text: string): Promise<ParseChaptersResponse> {
   try {
-    const response = await api.post<ParseChaptersResponse>('/chapters/parse', { text });
+    const response = await api.post<ParseChaptersResponse>('/chapters/parse', { text }, {
+      timeout: 60000
+    });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError<ParseChaptersResponse>(error) && error.response?.data) {
