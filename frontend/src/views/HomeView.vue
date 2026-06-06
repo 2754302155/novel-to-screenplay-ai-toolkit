@@ -17,7 +17,14 @@
         />
         <div class="toolbar">
           <label class="file-button" for="novelFile">上传 TXT</label>
-          <input id="novelFile" class="file-input" type="file" accept=".txt,text/plain" @change="readFile" />
+          <input
+            id="novelFile"
+            class="file-input"
+            type="file"
+            accept=".txt,text/plain"
+            :disabled="isReadingFile"
+            @change="readFile"
+          />
           <button type="button" :disabled="!store.canParse" @click="parseText">
             {{ store.isParsing ? '解析中' : '解析章节' }}
           </button>
@@ -30,6 +37,16 @@
         <strong>{{ store.charCount }}</strong>
         <p>建议单次导入 3 至 10 章。少于 3 章时不会进入转换流程。</p>
       </aside>
+    </div>
+
+    <div v-if="isReadingFile || uploadProgress > 0" class="upload-progress" aria-live="polite">
+      <div class="upload-progress-header">
+        <span class="label">TXT 读取进度</span>
+        <strong>{{ uploadProgress }}%</strong>
+      </div>
+      <div class="progress-track" aria-label="TXT 读取进度">
+        <div class="progress-bar" :style="{ width: `${uploadProgress}%` }" />
+      </div>
     </div>
 
     <div class="ai-settings-panel">
@@ -121,6 +138,8 @@ const aiSettings = useAISettingsStore();
 const router = useRouter();
 const fileError = ref('');
 const fileNotice = ref('');
+const isReadingFile = ref(false);
+const uploadProgress = ref(0);
 const maxUploadSizeMB = 10;
 const maxUploadSizeBytes = maxUploadSizeMB * 1024 * 1024;
 
@@ -144,6 +163,7 @@ const parseText = async () => {
 const readFile = async (event: Event) => {
   fileError.value = '';
   fileNotice.value = '';
+  uploadProgress.value = 0;
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) {
@@ -162,13 +182,44 @@ const readFile = async (event: Event) => {
     return;
   }
 
-  const decoded = decodeTextFileBuffer(await file.arrayBuffer());
-  store.setText(decoded.text);
-  fileNotice.value = `已按 ${formatEncodingName(decoded.encoding)} 编码读取 TXT。`;
-  input.value = '';
+  isReadingFile.value = true;
+  try {
+    const decoded = decodeTextFileBuffer(await readFileAsArrayBuffer(file));
+    store.setText(decoded.text);
+    uploadProgress.value = 100;
+    fileNotice.value = `已按 ${formatEncodingName(decoded.encoding)} 编码读取 TXT。`;
+  } catch {
+    fileError.value = 'TXT 文件读取失败，请重新选择文件。';
+    uploadProgress.value = 0;
+  } finally {
+    isReadingFile.value = false;
+    input.value = '';
+  }
 };
 
 const updateAISetting = (key: 'base_url' | 'model' | 'api_key', event: Event) => {
   aiSettings.update({ [key]: (event.target as HTMLInputElement).value });
 };
+
+function readFileAsArrayBuffer(file: File) {
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        uploadProgress.value = Math.min(99, Math.round((event.loaded / event.total) * 100));
+      } else if (uploadProgress.value === 0) {
+        uploadProgress.value = 1;
+      }
+    };
+    reader.onload = () => {
+      if (reader.result instanceof ArrayBuffer) {
+        resolve(reader.result);
+        return;
+      }
+      reject(new Error('unexpected file reader result'));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('file reader failed'));
+    reader.readAsArrayBuffer(file);
+  });
+}
 </script>

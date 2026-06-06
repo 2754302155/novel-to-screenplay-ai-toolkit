@@ -323,6 +323,26 @@ input {
   font-size: 34px;
 }
 
+.upload-progress {
+  width: min(100%, 520px);
+  margin-top: 18px;
+  border: 1px solid #d7dee8;
+  border-radius: 8px;
+  padding: 16px;
+  background: #ffffff;
+}
+
+.upload-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.upload-progress-header strong {
+  font-size: 18px;
+}
+
 .import-summary p,
 .empty-state p {
   margin: 10px 0 0;
