@@ -86,6 +86,10 @@
       {{ fileError }}
     </div>
 
+    <div v-if="fileNotice" class="alert alert-success">
+      {{ fileNotice }}
+    </div>
+
     <div v-if="store.parseResult" class="parse-preview">
       <div>
         <span class="label">识别章节</span>
@@ -110,11 +114,13 @@ import { useRouter } from 'vue-router';
 
 import { useAISettingsStore } from '../stores/aiSettings';
 import { useImportSessionStore } from '../stores/importSession';
+import { decodeTextFileBuffer, formatEncodingName } from '../utils/textFileDecoder';
 
 const store = useImportSessionStore();
 const aiSettings = useAISettingsStore();
 const router = useRouter();
 const fileError = ref('');
+const fileNotice = ref('');
 const maxUploadSizeMB = 10;
 const maxUploadSizeBytes = maxUploadSizeMB * 1024 * 1024;
 
@@ -137,6 +143,7 @@ const parseText = async () => {
 
 const readFile = async (event: Event) => {
   fileError.value = '';
+  fileNotice.value = '';
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
   if (!file) {
@@ -155,7 +162,9 @@ const readFile = async (event: Event) => {
     return;
   }
 
-  store.setText(await file.text());
+  const decoded = decodeTextFileBuffer(await file.arrayBuffer());
+  store.setText(decoded.text);
+  fileNotice.value = `已按 ${formatEncodingName(decoded.encoding)} 编码读取 TXT。`;
   input.value = '';
 };
 

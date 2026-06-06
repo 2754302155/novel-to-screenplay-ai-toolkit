@@ -347,6 +347,12 @@ input {
   background: #fff8df;
 }
 
+.alert-success {
+  border: 1px solid #92c9aa;
+  color: #1f6b43;
+  background: #f3fbf6;
+}
+
 .parse-preview,
 .confirm-summary {
   display: grid;
