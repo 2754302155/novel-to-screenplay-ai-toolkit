@@ -115,6 +115,8 @@ const store = useImportSessionStore();
 const aiSettings = useAISettingsStore();
 const router = useRouter();
 const fileError = ref('');
+const maxUploadSizeMB = 10;
+const maxUploadSizeBytes = maxUploadSizeMB * 1024 * 1024;
 
 const text = computed({
   get: () => store.rawText,
@@ -147,8 +149,8 @@ const readFile = async (event: Event) => {
     return;
   }
 
-  if (file.size > 2 * 1024 * 1024) {
-    fileError.value = '文件超过 2MB，请拆分后再上传。';
+  if (file.size > maxUploadSizeBytes) {
+    fileError.value = `文件超过 ${maxUploadSizeMB}MB，请拆分后再上传。`;
     input.value = '';
     return;
   }
