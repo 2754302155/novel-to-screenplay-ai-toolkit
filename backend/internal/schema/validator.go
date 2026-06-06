@@ -188,11 +188,16 @@ func repairScenes(scenes []domain.Scene, characters []domain.Character, chapters
 		characterIDs[character.ID] = true
 	}
 	fallbackCharacterID := characters[0].ID
+	chapterIDs := map[string]bool{}
+	for _, chapter := range chapters {
+		chapterIDs[chapter.ID] = true
+	}
 
 	for index := range scenes {
 		if scenes[index].ID == "" {
 			scenes[index].ID = fmt.Sprintf("SCENE%03d", index+1)
 		}
+		scenes[index].SourceRefs = filterKnownChapterIDs(scenes[index].SourceRefs, chapterIDs)
 		if len(scenes[index].SourceRefs) == 0 {
 			scenes[index].SourceRefs = []string{chapterIDAt(chapters, index)}
 		}
@@ -246,6 +251,18 @@ func filterKnownCharacterIDs(ids []string, known map[string]bool) []string {
 	for _, id := range ids {
 		if known[id] {
 			filtered = append(filtered, id)
+		}
+	}
+	return filtered
+}
+
+func filterKnownChapterIDs(ids []string, known map[string]bool) []string {
+	filtered := []string{}
+	seen := map[string]bool{}
+	for _, id := range ids {
+		if known[id] && !seen[id] {
+			filtered = append(filtered, id)
+			seen[id] = true
 		}
 	}
 	return filtered

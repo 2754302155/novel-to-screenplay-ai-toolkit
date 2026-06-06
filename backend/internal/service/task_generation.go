@@ -255,7 +255,7 @@ func mergeChunkDrafts(
 		for _, scene := range partial.Scenes {
 			scene.ID = fmt.Sprintf("SCENE%03d", sceneIndex)
 			sceneIndex++
-			if len(scene.SourceRefs) == 0 && partialIndex < len(chunks) {
+			if partialIndex < len(chunks) {
 				scene.SourceRefs = []string{chunks[partialIndex].Chapter.ID}
 			}
 			for index, characterID := range scene.Characters {
