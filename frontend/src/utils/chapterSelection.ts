@@ -1,4 +1,5 @@
 export const MIN_SELECTED_CHAPTERS = 3;
+export const MAX_SELECTED_WORDS = 100000;
 
 export interface ChapterRange {
   start: number;
@@ -10,6 +11,10 @@ export interface ChapterRange {
 export interface ChapterTextPart {
   title: string;
   body?: string;
+}
+
+export interface ChapterWordPart {
+  word_count: number;
 }
 
 export function normalizeChapterRange(
@@ -51,6 +56,10 @@ export function buildSelectedChapterSourceText(chapters: ChapterTextPart[]) {
     .map((chapter) => [chapter.title.trim(), chapter.body?.trim()].filter(Boolean).join('\n'))
     .filter(Boolean)
     .join('\n\n');
+}
+
+export function sumChapterWordCount(chapters: ChapterWordPart[]) {
+  return chapters.reduce((total, chapter) => total + chapter.word_count, 0);
 }
 
 function clampIndex(index: number, maxIndex: number) {

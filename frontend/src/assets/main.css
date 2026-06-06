@@ -414,6 +414,36 @@ input {
   gap: 14px;
 }
 
+.over-limit-text {
+  color: #9b2c2c;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.pagination-bar strong {
+  display: block;
+  margin-top: 4px;
+}
+
+.pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination-actions span {
+  min-width: 72px;
+  color: #344253;
+  font-weight: 700;
+  text-align: center;
+}
+
 .empty-state {
   margin-top: 28px;
   padding: 24px;
@@ -753,5 +783,18 @@ tr.selected-row td {
 
   .yaml-actions button {
     flex: 1 1 140px;
+  }
+
+  .pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .pagination-actions {
+    width: 100%;
+  }
+
+  .pagination-actions button {
+    flex: 1 1 120px;
   }
 }
