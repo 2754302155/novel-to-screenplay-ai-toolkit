@@ -37,6 +37,30 @@ button:hover {
   background: #eef3f8;
 }
 
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  height: 36px;
+  border: 1px solid #b9c3cf;
+  border-radius: 6px;
+  padding: 0 12px;
+  color: #17202a;
+  background: #ffffff;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.button-link:hover {
+  background: #eef3f8;
+}
+
+.button-link:focus-visible {
+  outline: 3px solid rgb(47 119 132 / 18%);
+  outline-offset: 2px;
+}
+
 button:disabled {
   color: #94a0ad;
   cursor: not-allowed;
@@ -781,7 +805,8 @@ tr.selected-row td {
     width: 100%;
   }
 
-  .yaml-actions button {
+  .yaml-actions button,
+  .yaml-actions .button-link {
     flex: 1 1 140px;
   }
 

@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAML 剧本初稿字段说明</title>
+    <style>
+      :root {
+        color: #1f2933;
+        background: #eef3f7;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #eef3f7;
+        color: #1f2933;
+        line-height: 1.75;
+      }
+
+      .document {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 40px 28px 56px;
+        background: #ffffff;
+      }
+
+      header {
+        border-bottom: 3px solid #2f7784;
+        padding-bottom: 24px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: #2f7784;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        color: #16242f;
+        line-height: 1.35;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+
+      h2 {
+        margin-top: 34px;
+        padding-top: 20px;
+        border-top: 1px solid #d9e2ea;
+        font-size: 24px;
+      }
+
+      h3 {
+        margin-top: 20px;
+        font-size: 18px;
+      }
+
+      p {
+        margin: 10px 0;
+      }
+
+      ul,
+      ol {
+        margin: 10px 0 0;
+        padding-left: 22px;
+      }
+
+      li {
+        margin: 6px 0;
+      }
+
+      code {
+        border-radius: 4px;
+        padding: 2px 5px;
+        background: #eef3f7;
+        color: #1f4f5a;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.94em;
+      }
+
+      pre {
+        overflow: auto;
+        border: 1px solid #d9e2ea;
+        border-radius: 8px;
+        padding: 16px;
+        background: #f7fafc;
+        color: #253241;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 14px;
+        font-size: 14px;
+      }
+
+      th,
+      td {
+        border: 1px solid #d9e2ea;
+        padding: 10px 12px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #edf6f8;
+        color: #183640;
+      }
+
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .summary div,
+      .note,
+      .checklist {
+        border: 1px solid #d9e2ea;
+        border-radius: 8px;
+        background: #fbfcfe;
+      }
+
+      .summary div {
+        padding: 14px;
+      }
+
+      .summary strong {
+        display: block;
+        color: #16242f;
+      }
+
+      .summary span {
+        color: #5d6b78;
+        font-size: 13px;
+      }
+
+      .note {
+        margin: 16px 0;
+        padding: 14px 16px;
+        border-left: 4px solid #2f7784;
+      }
+
+      .checklist {
+        padding: 16px;
+      }
+
+      .field-path {
+        min-width: 190px;
+        color: #1f4f5a;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-weight: 700;
+      }
+
+      .footer {
+        margin-top: 36px;
+        padding-top: 18px;
+        border-top: 1px solid #d9e2ea;
+        color: #607080;
+        font-size: 13px;
+      }
+
+      @media (max-width: 760px) {
+        .document {
+          padding: 28px 18px 40px;
+        }
+
+        h1 {
+          font-size: 28px;
+        }
+
+        .summary {
+          grid-template-columns: 1fr;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media print {
+        @page {
+          size: A4;
+          margin: 14mm 12mm;
+        }
+
+        body {
+          background: #ffffff;
+        }
+
+        .document {
+          max-width: none;
+          padding: 0;
+        }
+
+        h2 {
+          break-after: avoid;
+        }
+
+        table,
+        pre,
+        .note,
+        .checklist {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="document">
+      <header>
+        <p class="eyebrow">Novel To Screenplay</p>
+        <h1>YAML 剧本初稿字段说明</h1>
+        <p>
+          这份文档面向小说作者和编剧编辑，帮助你读懂 AI 生成的 YAML 剧本初稿。YAML 不是最终成片剧本，
+          而是一份结构化创作底稿：它把小说章节拆成项目资料、改编方向、人物表、场景、节拍和质量提示，方便后续继续改写。
+        </p>
+        <div class="summary">
+          <div>
+            <strong>先看主线</strong>
+            <span><code>adaptation</code> 概括改编方向，<code>scenes</code> 承载具体戏。</span>
+          </div>
+          <div>
+            <strong>再查来源</strong>
+            <span><code>source_refs</code> 会标出场景来自哪些章节，便于回到原文核对。</span>
+          </div>
+          <div>
+            <strong>最后复核</strong>
+            <span><code>quality_report</code> 会列出需要人工确认的问题和风险。</span>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2>1. YAML 怎么读</h2>
+        <p>
+          YAML 用缩进表达层级。冒号左边是字段名，右边是内容；以短横线开头的多行内容表示数组，例如多个角色、多个场景或多个节拍。
+        </p>
+        <pre>characters:
+  - id: CHAR001
+    name: 许七安
+    role_type: protagonist
+scenes:
+  - id: SCENE001
+    source_refs: [CH001]
+    beats:
+      - type: action
+        text: 许七安在牢房中醒来，意识到处境异常。</pre>
+        <div class="note">
+          编辑时请尽量保留字段名和缩进，只修改字段值。数组字段没有内容时写成 <code>[]</code>，不要改成 <code>false</code>、<code>无</code> 或空白。
+        </div>
+      </section>
+
+      <section>
+        <h2>2. 顶层结构总览</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>字段</th>
+              <th>作用</th>
+              <th>作者需要关注什么</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="field-path">schema_version</td>
+              <td>标记当前 YAML 结构版本。</td>
+              <td>通常保持为 <code>"1.0"</code>，用于系统校验和后续兼容。</td>
+            </tr>
+            <tr>
+              <td class="field-path">project</td>
+              <td>记录作品标题、作者和生成时间。</td>
+              <td>可把标题改成正式剧名，把作者补全为原作者或改编者。</td>
+            </tr>
+            <tr>
+              <td class="field-path">source</td>
+              <td>记录本次转换使用的章节范围。</td>
+              <td>用来确认是否选中了正确章节，以及后续每场戏是否有来源依据。</td>
+            </tr>
+            <tr>
+              <td class="field-path">adaptation</td>
+              <td>记录改编格式、故事钩子、梗概和主题。</td>
+              <td>这是给编剧快速理解故事方向的摘要，可以大胆精修。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters</td>
+              <td>人物表，供场景引用。</td>
+              <td>重点核对姓名、别名、身份、首次出场章节是否正确。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes</td>
+              <td>剧本初稿的核心，按场景组织动作、对白、旁白和转场。</td>
+              <td>后续改写主要围绕这里展开：增删场景、调整节奏、补对白。</td>
+            </tr>
+            <tr>
+              <td class="field-path">continuity</td>
+              <td>可选字段，记录跨章节连续性。</td>
+              <td>适合长篇小说分批转换时保存伏笔、时间线和待解决问题。</td>
+            </tr>
+            <tr>
+              <td class="field-path">quality_report</td>
+              <td>质量报告，记录覆盖率、警告和人工复核项。</td>
+              <td>转换后先看这里，可以快速发现 AI 推断或遗漏的地方。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>3. 项目信息：project</h2>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">project.title</td>
+              <td>作品或项目名称。AI 不确定时可能写“未命名作品”。</td>
+            </tr>
+            <tr>
+              <td class="field-path">project.author</td>
+              <td>作者或改编者。可以填写小说作者、编剧团队或项目负责人。</td>
+            </tr>
+            <tr>
+              <td class="field-path">project.generated_at</td>
+              <td>生成时间，便于区分不同版本。通常不需要手动修改。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>4. 来源章节：source</h2>
+        <p>
+          <code>source</code> 不是正文，而是本次转换范围的索引。章节正文不会写入 YAML，避免结果文件过长，也便于保护原文内容。
+        </p>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">source.chapter_count</td>
+              <td>本次参与转换的章节数量。</td>
+            </tr>
+            <tr>
+              <td class="field-path">source.chapters[].id</td>
+              <td>章节编号，例如 <code>CH008</code>。场景里的 <code>source_refs</code> 会引用它。</td>
+            </tr>
+            <tr>
+              <td class="field-path">source.chapters[].title</td>
+              <td>章节标题，用于作者快速定位原文。</td>
+            </tr>
+            <tr>
+              <td class="field-path">source.chapters[].word_count</td>
+              <td>章节字数估算，可辅助判断某章是否被过度压缩或遗漏。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>5. 改编方向：adaptation</h2>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">adaptation.format</td>
+              <td>目标形态，例如短剧、网剧、电影分场或创作素材。</td>
+            </tr>
+            <tr>
+              <td class="field-path">adaptation.logline</td>
+              <td>一句话故事钩子，用来说明主角、目标、冲突和看点。</td>
+            </tr>
+            <tr>
+              <td class="field-path">adaptation.synopsis</td>
+              <td>本次章节范围的剧情梗概。适合给导演、制片或编剧快速同步。</td>
+            </tr>
+            <tr>
+              <td class="field-path">adaptation.themes</td>
+              <td>主题数组，例如权谋、成长、复仇、悬疑。没有明确主题时写 <code>[]</code>。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>6. 人物表：characters</h2>
+        <p>
+          人物表为场景服务。每个场景的 <code>characters</code> 字段应该引用这里的 <code>id</code>，这样系统和作者都能知道场景里有哪些人。
+        </p>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">characters[].id</td>
+              <td>人物唯一编号，例如 <code>CHAR001</code>。修改编号时，要同步修改场景引用。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters[].name</td>
+              <td>人物姓名。若 AI 写成“待确认角色”，需要回到原文核对。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters[].aliases</td>
+              <td>别名、称号、外号数组，例如官职、江湖名、化名。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters[].role_type</td>
+              <td>人物功能，例如 <code>protagonist</code>、<code>antagonist</code>、<code>supporting</code>、<code>unknown</code>。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters[].description</td>
+              <td>人物身份、动机、关系和当前状态的简述。</td>
+            </tr>
+            <tr>
+              <td class="field-path">characters[].first_appearance</td>
+              <td>首次出场章节编号。用于追踪人物进入故事的时间点。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>7. 场景：scenes</h2>
+        <p>
+          <code>scenes</code> 是最重要的部分。它把小说叙事转换成可继续编辑的剧本场面。每个场景至少有一个节拍，
+          节拍可以是动作、对白、旁白、转场或备注。
+        </p>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">scenes[].id</td>
+              <td>场景编号，例如 <code>SCENE001</code>。用于排序和后续引用。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].source_refs</td>
+              <td>来源章节数组，例如 <code>[CH008]</code>。一个场景跨多章时可写多个。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].heading</td>
+              <td>场景标题，通常包含内外景、地点、时间，例如“内景 - 驿站客房 - 夜”。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].location</td>
+              <td>具体地点。若 AI 不确定，可以先写“待确认地点”，后续再改。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].time_of_day</td>
+              <td>时间段，例如夜、清晨、白天、unknown。用于拍摄和氛围判断。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].characters</td>
+              <td>场景出场人物 ID 数组，必须对应 <code>characters[].id</code>。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].dramatic_purpose</td>
+              <td>这场戏的戏剧功能，例如揭示秘密、制造冲突、推动主角做选择。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].beats</td>
+              <td>场景内部的节拍列表，是动作、对白和转场的具体内容。</td>
+            </tr>
+            <tr>
+              <td class="field-path">scenes[].notes</td>
+              <td>编辑备注数组，记录需要补充的信息或改写建议。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>节拍 beats 的字段</h3>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">beats[].type</td>
+              <td>只能使用 <code>action</code>、<code>dialogue</code>、<code>voice_over</code>、<code>transition</code>、<code>note</code>。</td>
+            </tr>
+            <tr>
+              <td class="field-path">beats[].speaker</td>
+              <td>对白或旁白的说话人。动作和转场可留空字符串 <code>""</code>。</td>
+            </tr>
+            <tr>
+              <td class="field-path">beats[].text</td>
+              <td>具体内容，不能留空，也不要写“待补充”。这是后续改写的主要材料。</td>
+            </tr>
+            <tr>
+              <td class="field-path">beats[].confidence</td>
+              <td>AI 对该节拍的把握程度，范围是 0 到 1。数值低时建议回原文核对。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>8. 连续性：continuity</h2>
+        <p>
+          <code>continuity</code> 是可选字段，特别适合长篇小说分批转换。它帮助后面的章节延续前面的时间线、伏笔和未解决问题。
+        </p>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">continuity.timeline</td>
+              <td>时间线关键节点，例如“主角醒来”“案件线索出现”。</td>
+            </tr>
+            <tr>
+              <td class="field-path">continuity.foreshadowing</td>
+              <td>伏笔数组，记录后续需要回收的信息。</td>
+            </tr>
+            <tr>
+              <td class="field-path">continuity.unresolved_issues</td>
+              <td>尚未解决的问题，例如人物动机不明、线索未解释。</td>
+            </tr>
+            <tr>
+              <td class="field-path">continuity.carry_forward_notes</td>
+              <td>需要带到下一批章节继续使用的设定和编辑提醒。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>9. 质量报告：quality_report</h2>
+        <table>
+          <tbody>
+            <tr>
+              <td class="field-path">coverage.converted_chapters</td>
+              <td>已覆盖章节数量。应接近本次选择章节数。</td>
+            </tr>
+            <tr>
+              <td class="field-path">coverage.estimated_unconverted_ratio</td>
+              <td>估算未转换比例，0 表示没有明显遗漏，数值越高越需要复核。</td>
+            </tr>
+            <tr>
+              <td class="field-path">warnings</td>
+              <td>警告数组，记录 AI 推断、结构不确定、内容偏保守等风险。</td>
+            </tr>
+            <tr>
+              <td class="field-path">human_review_required</td>
+              <td>人工复核项数组。这里列出的事项建议作者优先处理。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>10. 作者编辑建议</h2>
+        <div class="checklist">
+          <ol>
+            <li>先确认 <code>source.chapters</code> 是否是你想转换的章节范围。</li>
+            <li>阅读 <code>adaptation.logline</code> 和 <code>synopsis</code>，判断 AI 是否抓住故事核心。</li>
+            <li>核对 <code>characters</code>，尤其是姓名、别名、身份和人物关系。</li>
+            <li>逐场检查 <code>scenes[].source_refs</code>，确保场景来源没有错章。</li>
+            <li>把低置信度 <code>confidence</code> 或含“待确认”的内容回原文核对。</li>
+            <li>根据 <code>quality_report.human_review_required</code> 逐条补齐人工判断。</li>
+            <li>保存前使用页面里的“重新校验”，确认 YAML 结构仍然有效。</li>
+          </ol>
+        </div>
+      </section>
+
+      <section>
+        <h2>11. 小型参考模板</h2>
+        <pre>schema_version: "1.0"
+project:
+  title: 示例作品
+  author: 作者名
+  generated_at: "2026-06-06T00:00:00Z"
+source:
+  chapter_count: 3
+  chapters:
+    - id: CH001
+      title: 第一章
+      word_count: 3200
+adaptation:
+  format: web_drama
+  logline: 主角在危机中发现隐藏身份，被迫卷入更大的阴谋。
+  synopsis: 本段章节建立主角困境、关键线索和第一轮冲突。
+  themes: [身份错位, 悬疑, 成长]
+characters:
+  - id: CHAR001
+    name: 主角
+    aliases: []
+    role_type: protagonist
+    description: 被卷入事件的核心人物，目标是活下去并查明真相。
+    first_appearance: CH001
+scenes:
+  - id: SCENE001
+    source_refs: [CH001]
+    heading: 内景 - 房间 - 夜
+    location: 房间
+    time_of_day: 夜
+    characters: [CHAR001]
+    dramatic_purpose: 建立主角危机和第一条线索。
+    beats:
+      - type: action
+        speaker: ""
+        text: 主角醒来，发现环境陌生，门外传来急促脚步声。
+        confidence: 0.82
+    notes: []
+quality_report:
+  coverage:
+    converted_chapters: 3
+    estimated_unconverted_ratio: 0
+  warnings: []
+  human_review_required: []</pre>
+      </section>
+
+      <p class="footer">
+        本帮助文档基于 AI 小说转剧本工具当前 YAML Schema、生成提示词和长文本分块生成设计编写。建议在每次重要改写后保存一份新的 YAML，
+        并保留原始生成版本，方便比较和回滚。
+      </p>
+    </main>
+  </body>
+</html>
