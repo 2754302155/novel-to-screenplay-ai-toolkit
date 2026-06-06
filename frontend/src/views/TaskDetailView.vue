@@ -106,6 +106,7 @@
               {{ isValidating ? '校验中' : '重新校验' }}
             </button>
             <button type="button" :disabled="!yamlText.trim()" @click="downloadYAML">下载当前 YAML</button>
+            <a class="button-link" :href="yamlHelpPDFUrl" download>下载 YAML 帮助 PDF</a>
             <button type="button" @click="resetYAML">恢复生成结果</button>
           </div>
         </div>
@@ -183,6 +184,7 @@ const yamlText = ref('');
 const editorMessage = ref('');
 const validationResult = ref<ValidateYAMLResponse | null>(null);
 const isValidating = ref(false);
+const yamlHelpPDFUrl = '/docs/yaml-screenplay-guide.pdf';
 const taskId = computed(() => String(route.params.id ?? ''));
 const task = computed(() => taskStore.currentTask);
 const statusLabel = computed(() => {
