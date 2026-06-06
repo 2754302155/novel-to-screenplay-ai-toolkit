@@ -119,6 +119,34 @@ func TestRepairDraftFixesInvalidSceneReferences(t *testing.T) {
 	}
 }
 
+func TestRepairDraftReplacesUnknownSourceRefs(t *testing.T) {
+	repaired := RepairDraft(domain.ScreenplayDraft{
+		SchemaVersion: domain.CurrentSchemaVersion,
+		Source: domain.Source{
+			ChapterCount: 3,
+			Chapters:     sampleChapters(),
+		},
+		Characters: []domain.Character{{ID: "CHAR001", Name: "林夏"}},
+		Scenes: []domain.Scene{
+			{
+				ID:         "SCENE001",
+				SourceRefs: []string{"CH999"},
+				Characters: []string{"CHAR001"},
+				Beats: []domain.Beat{
+					{Type: "action", Text: "林夏进入书店。", Confidence: 0.8},
+				},
+			},
+		},
+	}, sampleChapters(), time.Date(2026, 6, 5, 10, 0, 0, 0, time.UTC))
+
+	if result := ValidateDraft(repaired); !result.Valid {
+		t.Fatalf("expected repaired draft to be valid, got %#v", result.Issues)
+	}
+	if got := repaired.Scenes[0].SourceRefs; len(got) != 1 || got[0] != "CH001" {
+		t.Fatalf("expected unknown source ref to be replaced with CH001, got %#v", got)
+	}
+}
+
 func sampleChapters() []domain.Chapter {
 	return []domain.Chapter{
 		{ID: "CH001", Title: "第一章", WordCount: 10},

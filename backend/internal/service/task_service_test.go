@@ -160,6 +160,45 @@ func TestTaskServiceCompletesWithFallbackChunks(t *testing.T) {
 	}
 }
 
+func TestTaskServiceNormalizesChunkSourceRefs(t *testing.T) {
+	repo := repository.NewTaskRepository()
+	service := NewTaskService(repo, wrongSourceRefClient{})
+	startedAt := time.Date(2026, 6, 5, 10, 0, 0, 0, time.UTC)
+	service.now = func() time.Time { return startedAt }
+
+	task, err := service.Create(CreateConversionTaskInput{
+		SourceText: "正文",
+		Chapters: []domain.Chapter{
+			{ID: "CH008", Title: "第七章", WordCount: 10, Body: "第七章正文"},
+			{ID: "CH009", Title: "第八章", WordCount: 10, Body: "第八章正文"},
+			{ID: "CH010", Title: "第九章", WordCount: 10, Body: "第九章正文"},
+			{ID: "CH011", Title: "第十章", WordCount: 10, Body: "第十章正文"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("create task: %v", err)
+	}
+
+	service.now = func() time.Time { return startedAt.Add(7 * time.Second) }
+	if _, err := service.Get(task.ID); err != nil {
+		t.Fatalf("get task: %v", err)
+	}
+
+	task = waitForTaskStatus(t, repo, task.ID, domain.TaskStatusCompleted)
+	if task.Draft == nil {
+		t.Fatal("expected completed draft")
+	}
+	want := []string{"CH008", "CH009", "CH010", "CH011"}
+	if len(task.Draft.Scenes) != len(want) {
+		t.Fatalf("expected %d scenes, got %d", len(want), len(task.Draft.Scenes))
+	}
+	for index, scene := range task.Draft.Scenes {
+		if len(scene.SourceRefs) != 1 || scene.SourceRefs[0] != want[index] {
+			t.Fatalf("scene %d source refs = %#v, want %s", index, scene.SourceRefs, want[index])
+		}
+	}
+}
+
 func TestBuildDraftChunksSplitsLongChapterBody(t *testing.T) {
 	chunks := buildDraftChunks("", []domain.Chapter{
 		{ID: "CH001", Title: "第一章", WordCount: 7000, Body: strings.Repeat("甲", maxDraftChunkChars+100)},
@@ -214,9 +253,41 @@ type blockingClient struct {
 }
 
 type failingClient struct{}
+type wrongSourceRefClient struct{}
 
 func (client failingClient) GenerateDraft(ctx context.Context, input ai.DraftInput) (domain.ScreenplayDraft, error) {
 	return domain.ScreenplayDraft{}, errors.New("forced chunk failure")
+}
+
+func (client wrongSourceRefClient) GenerateDraft(ctx context.Context, input ai.DraftInput) (domain.ScreenplayDraft, error) {
+	return domain.ScreenplayDraft{
+		SchemaVersion: domain.CurrentSchemaVersion,
+		Project: domain.Project{
+			Title:       "测试",
+			GeneratedAt: time.Date(2026, 6, 5, 10, 0, 0, 0, time.UTC),
+		},
+		Source: domain.Source{
+			ChapterCount: 1,
+			Chapters:     []domain.Chapter{{ID: "CH001", Title: "错误章节编号", WordCount: 10}},
+		},
+		Characters: []domain.Character{
+			{ID: "CHAR001", Name: "许七安", Aliases: []string{}, RoleType: "protagonist"},
+		},
+		Scenes: []domain.Scene{
+			{
+				ID:         "SCENE001",
+				SourceRefs: []string{"CH001"},
+				Characters: []string{"CHAR001"},
+				Beats: []domain.Beat{
+					{Type: "action", Text: "许七安推进剧情。", Confidence: 0.8},
+				},
+			},
+		},
+		QualityReport: domain.QualityReport{
+			Warnings:            []string{},
+			HumanReviewRequired: []string{},
+		},
+	}, nil
 }
 
 func (client *blockingClient) GenerateDraft(ctx context.Context, input ai.DraftInput) (domain.ScreenplayDraft, error) {
