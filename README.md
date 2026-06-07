@@ -2,6 +2,8 @@
 
 AI 小说转剧本工具用于将中文小说 TXT 文本解析为章节，并借助 OpenAI 兼容接口生成结构化 YAML 剧本初稿。系统面向小说作者、编剧和内容改编团队，重点解决长文本导入、章节选择、AI 分块生成、结果校验、YAML 下载和任务结果持久化。
 
+> Demo 演示视频：[Bilibili - AI 小说转剧本工具演示](https://www.bilibili.com/video/BV1BjEb6fE8q/)
+
 ## 功能概览
 
 - TXT 小说导入：支持粘贴正文或上传 TXT，单文件上限 10MB。
